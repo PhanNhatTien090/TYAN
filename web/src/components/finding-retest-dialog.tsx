@@ -42,9 +42,9 @@ export function FindingRetestDialog({ findingId, findingName, onClose, onStarted
       const result = await api.startFindingRetest(findingId, notes.trim());
       onStarted?.(result.retest);
       onClose();
-      toast.success(result.created ? "复测已启动，可点击「复测中」查看会话" : "该漏洞正在复测，可查看已有会话");
+      toast.success(result.created ? "Recovering started, click \"Recovering\" to view sessions" : "The loophole is being rechecked and can be viewed for existing sessions");
     } catch (e) {
-      toast.error(`发起复测失败：${(e as Error).message}`);
+      toast.error(`Failed to start retest:${(e as Error).message}`);
     } finally {
       submitLock.current = false;
       setSubmitting(false);
@@ -55,16 +55,16 @@ export function FindingRetestDialog({ findingId, findingName, onClose, onStarted
     <Dialog open onOpenChange={(open) => !open && !submitLock.current && onClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>复测漏洞 #{findingId}</DialogTitle>
+          <DialogTitle>Retest finding #{findingId}</DialogTitle>
           <DialogDescription className="break-words">
             {findingName ? <span className="mb-2 block">{findingName}</span> : null}
-            复测 Agent
-            将读取原证据和测试约束，在独立会话中执行针对性验证。复测成功完成且确认修复后，漏洞状态自动改为「已修复」，其他结论保留原状态。
+            Retest agent
+            Read the original evidence and test limits and perform a targeted validation in an independent session. Once the retrospection has been successfully completed and the repair has been confirmed, the lacuna is automatically changed to " repaired " , and the other conclusions remain as they were.
           </DialogDescription>
         </DialogHeader>
         <FieldGroup>
           <Field data-disabled={submitting}>
-            <FieldLabel htmlFor={notesId}>补充说明（可选）</FieldLabel>
+            <FieldLabel htmlFor={notesId}>Supplementary notes (optional)</FieldLabel>
             <Textarea
               id={notesId}
               value={notes}
@@ -72,18 +72,18 @@ export function FindingRetestDialog({ findingId, findingName, onClose, onStarted
               rows={4}
               disabled={submitting}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="例如：使用原测试账号验证原接口；修复版本为 v2。"
+              placeholder={"For example: Validation of the original interface using the original test account; restoration version v2."}
             />
-            <FieldDescription>可补充修复版本、测试条件或本次限制。</FieldDescription>
+            <FieldDescription>Refurbishment version, test condition or this limitation may be supplemented.</FieldDescription>
           </Field>
         </FieldGroup>
         <DialogFooter>
           <Button variant="outline" disabled={submitting} onClick={onClose}>
-            取消
+            Cancel
           </Button>
           <Button disabled={submitting} onClick={() => void start()}>
             {submitting ? <Spinner data-icon="inline-start" /> : <RotateCcwIcon data-icon="inline-start" />}
-            {submitting ? "正在创建…" : "开始复测"}
+            {submitting ? "Creating..." : "Start retest"}
           </Button>
         </DialogFooter>
       </DialogContent>

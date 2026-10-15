@@ -43,49 +43,49 @@ type KindMeta = { label: string; icon: LucideIcon; dot: string; chip: string };
 // 播报是流水视角(时间轴行),两边的信息密度和配色需求不同,各自演进更省事。
 const KIND_META: Record<string, KindMeta> = {
   begin: {
-    label: "起点",
+    label: "Origin",
     icon: FlagIcon,
     dot: "bg-slate-500",
     chip: "bg-slate-500/15 text-slate-600 dark:text-slate-300",
   },
   task: {
-    label: "根任务",
+    label: "Root task",
     icon: FlagIcon,
     dot: "bg-slate-500",
     chip: "bg-slate-500/15 text-slate-600 dark:text-slate-300",
   },
   goal: {
-    label: "目标",
+    label: "Objective",
     icon: TargetIcon,
     dot: "bg-emerald-500",
     chip: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400",
   },
   intent: {
-    label: "意图",
+    label: "Intent",
     icon: CompassIcon,
     dot: "bg-blue-500",
     chip: "bg-blue-500/15 text-blue-600 dark:text-blue-400",
   },
   fact: {
-    label: "事实",
+    label: "Fact",
     icon: FlaskConicalIcon,
     dot: "bg-amber-500",
     chip: "bg-amber-500/15 text-amber-600 dark:text-amber-400",
   },
   finding: {
-    label: "漏洞",
+    label: "Vulnerabilities",
     icon: BugIcon,
     dot: "bg-rose-500",
     chip: "bg-rose-500/15 text-rose-600 dark:text-rose-400",
   },
   hint: {
-    label: "提示",
+    label: "Hint",
     icon: LightbulbIcon,
     dot: "bg-violet-500",
     chip: "bg-violet-500/15 text-violet-600 dark:text-violet-400",
   },
   digest: {
-    label: "压缩",
+    label: "Compact",
     icon: LayersIcon,
     dot: "bg-teal-500",
     chip: "bg-teal-500/15 text-teal-600 dark:text-teal-400",
@@ -96,32 +96,32 @@ const KIND_META: Record<string, KindMeta> = {
 const FILTER_KINDS: ExploreKind[] = ["goal", "intent", "fact", "finding", "hint", "digest"];
 
 const REL_LABEL: Record<string, string> = {
-  spawns: "派生",
-  derived_from: "意图链",
-  yields: "产出",
-  proves: "证明",
-  covers: "压缩",
+  spawns: "Derived",
+  derived_from: "Intent chain",
+  yields: "Output",
+  proves: "Proof",
+  covers: "Compact",
 };
 
 // goal / intent 的状态语义由全局 status 表提供(StatusBadge);其余类型的状态只在
 // 图和播报里出现,这里补一份。
 const STATE_META: Record<string, Record<string, { label: string; tone: Tone }>> = {
   fact: {
-    origin: { label: "起点", tone: "slate" },
-    confirmed: { label: "已确认", tone: "green" },
-    dismissed: { label: "已否定", tone: "slate" },
+    origin: { label: "Origin", tone: "slate" },
+    confirmed: { label: "Confirmed", tone: "green" },
+    dismissed: { label: "Rejected", tone: "slate" },
   },
   finding: {
-    confirmed: { label: "已确认", tone: "red" },
-    dismissed: { label: "已排除", tone: "slate" },
+    confirmed: { label: "Confirmed", tone: "red" },
+    dismissed: { label: "Excluded", tone: "slate" },
   },
   hint: {
-    active: { label: "待采纳", tone: "violet" },
-    consumed: { label: "已采纳", tone: "slate" },
+    active: { label: "Pending acceptance", tone: "violet" },
+    consumed: { label: "Accepted", tone: "slate" },
   },
   digest: {
-    active: { label: "生效中", tone: "green" },
-    superseded: { label: "已替代", tone: "slate" },
+    active: { label: "Active", tone: "green" },
+    superseded: { label: "Replaced", tone: "slate" },
   },
 };
 
@@ -159,7 +159,7 @@ function summaryOf(n: TaskNode): string {
 }
 
 function prettyPayload(raw?: string): string {
-  if (!raw?.trim()) return "（无 payload）";
+  if (!raw?.trim()) return "(no payload)";
   try {
     return JSON.stringify(JSON.parse(raw), null, 2);
   } catch {
@@ -170,10 +170,10 @@ function prettyPayload(raw?: string): string {
 function relTime(ts: number, now: number): string {
   if (!now || !ts) return "";
   const sec = Math.max(0, (now - ts) / 1000);
-  if (sec < 60) return "刚刚";
-  if (sec < 3600) return `${Math.floor(sec / 60)} 分钟前`;
-  if (sec < 86400) return `${Math.floor(sec / 3600)} 小时前`;
-  return `${Math.floor(sec / 86400)} 天前`;
+  if (sec < 60) return "Just now.";
+  if (sec < 3600) return `${Math.floor(sec / 60)} minutes ago`;
+  if (sec < 86400) return `${Math.floor(sec / 3600)} hours ago`;
+  return `${Math.floor(sec / 86400)} days ago`;
 }
 
 const dayFmt = new Intl.DateTimeFormat("zh-CN", { month: "long", day: "numeric", weekday: "short" });
@@ -215,7 +215,7 @@ function AssetList({ assets, dense = false }: { assets: FindingAsset[]; dense?: 
   if (assets.length === 0) return null;
   return (
     <div>
-      <div className="mb-1.5 text-xs font-medium text-muted-foreground">涉及资产 · {assets.length}</div>
+      <div className="mb-1.5 text-xs font-medium text-muted-foreground">Assets involved . {assets.length}</div>
       <ul className="flex flex-wrap gap-1.5">
         {assets.map((a) => {
           // 运行时 a.type 可能是标签表未覆盖的类型,退回原始字符串。转一层类型让回退不被判成多余。
@@ -258,11 +258,11 @@ function RelatedNodeCard({ node, assets }: { node: TaskNode; assets: FindingAsse
         )}
       </div>
       <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
-        <span>类型 {meta.label}</span>
-        <span>来源 {node.origin || "system"}</span>
+        <span>Type {meta.label}</span>
+        <span>Source {node.origin || "system"}</span>
         <span>{Number.isNaN(ts) ? node.ts : new Date(ts).toLocaleString("zh-CN")}</span>
       </div>
-      <p className="line-clamp-4 text-xs break-words">{summary || "（无摘要）"}</p>
+      <p className="line-clamp-4 text-xs break-words">{summary || "(No summary)"}</p>
       <AssetList assets={assets} dense />
       <pre className="max-h-40 overflow-auto rounded border bg-muted/40 p-2 font-mono text-[11px] whitespace-pre-wrap">
         {prettyPayload(node.payload)}
@@ -303,7 +303,7 @@ function RelatedList({
                       className="flex min-w-0 cursor-help items-center gap-2 text-left hover:underline"
                     >
                       <KindChip kind={viewKind(node)} />
-                      <span className="truncate">{summaryOf(node) || `节点 #${node.id}`}</span>
+                      <span className="truncate">{summaryOf(node) || `Node#${node.id}`}</span>
                     </button>
                   </HoverCardTrigger>
                   <HoverCardContent align="start" className="w-96">
@@ -311,7 +311,7 @@ function RelatedList({
                   </HoverCardContent>
                 </HoverCard>
               ) : (
-                <span className="text-muted-foreground">节点 #{row.id}</span>
+                <span className="text-muted-foreground">Node#{row.id}</span>
               )}
             </li>
           );
@@ -386,12 +386,12 @@ function BroadcastRow({
               )}
               {fresh && (
                 <span className="rounded bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-primary-foreground">
-                  新
+                  New
                 </span>
               )}
               <span className="ml-auto shrink-0 text-xs text-muted-foreground">{node.origin || "system"}</span>
             </div>
-            <p className={cn("mt-1 text-sm", !open && "line-clamp-2")}>{summary || `节点 #${node.id}`}</p>
+            <p className={cn("mt-1 text-sm", !open && "line-clamp-2")}>{summary || `Node#${node.id}`}</p>
           </div>
         </button>
 
@@ -399,23 +399,23 @@ function BroadcastRow({
           <div className="mt-2 ml-5 flex flex-col gap-3 rounded-md border bg-muted/30 p-3">
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
               <span>
-                节点 <code className="font-mono">#{node.id}</code>
+                Nodes <code className="font-mono">#{node.id}</code>
               </span>
-              <span>类型 {meta.label}</span>
-              <span>来源 {node.origin || "system"}</span>
+              <span>Type {meta.label}</span>
+              <span>Source {node.origin || "system"}</span>
               <span>{Number.isNaN(ts) ? node.ts : new Date(ts).toLocaleString("zh-CN")}</span>
             </div>
             {node.state === "deleted" && node.delete_reason && (
               <div className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs">
-                <span className="font-medium text-destructive">删除原因</span>
+                <span className="font-medium text-destructive">Delete Reason</span>
                 <span className="ml-2 break-words text-muted-foreground">{node.delete_reason}</span>
               </div>
             )}
             <AssetList assets={assets[node.id] ?? []} />
             {(upstream.length > 0 || downstream.length > 0) && (
               <div className="flex flex-col gap-3 sm:flex-row">
-                <RelatedList title="上游 · 由此而来" rows={upstream} refs={refs} assets={assets} />
-                <RelatedList title="下游 · 由此产生" rows={downstream} refs={refs} assets={assets} />
+                <RelatedList title={"Upstream · derived from"} rows={upstream} refs={refs} assets={assets} />
+                <RelatedList title={"Downstream · produces"} rows={downstream} refs={refs} assets={assets} />
               </div>
             )}
             <div>
@@ -558,7 +558,7 @@ export function BroadcastTab({ taskId }: { taskId: string }) {
   const groups: Array<{ day: string; rows: TaskNode[] }> = [];
   for (const node of items) {
     const ts = Date.parse(node.ts);
-    const day = Number.isNaN(ts) ? "未知日期" : dayFmt.format(ts);
+    const day = Number.isNaN(ts) ? "Unknown date" : dayFmt.format(ts);
     const last = groups[groups.length - 1];
     if (last && last.day === day) last.rows.push(node);
     else groups.push({ day, rows: [node] });
@@ -573,9 +573,9 @@ export function BroadcastTab({ taskId }: { taskId: string }) {
           <Input
             value={queryInput}
             onChange={(e) => setQueryInput(e.target.value)}
-            placeholder="搜索内容 / 来源 / 节点 id"
+            placeholder={"Search content / source / node id"}
             className="h-8 pl-8"
-            aria-label="搜索播报"
+            aria-label={"Search broadcasts"}
           />
         </div>
         <div className="flex flex-wrap items-center gap-1">
@@ -607,7 +607,7 @@ export function BroadcastTab({ taskId }: { taskId: string }) {
                 setPage(1);
               }}
             >
-              清除
+              Clear
             </Button>
           )}
         </div>
@@ -620,20 +620,20 @@ export function BroadcastTab({ taskId }: { taskId: string }) {
               setOrder((o) => (o === "desc" ? "asc" : "desc"));
               setPage(1);
             }}
-            aria-label={order === "desc" ? "当前最新在前，点击改为最早在前" : "当前最早在前，点击改为最新在前"}
+            aria-label={order === "desc" ? "For the current latest click read the earliest" : "Now at the earliest, click to the latest"}
           >
             {order === "desc" ? <ArrowDownIcon /> : <ArrowUpIcon />}
-            {order === "desc" ? "最新在前" : "最早在前"}
+            {order === "desc" ? "Newest first" : "Oldest first"}
           </Button>
           <Button
             variant={live ? "outline" : "secondary"}
             size="sm"
             className="h-8"
             onClick={() => setLive((v) => !v)}
-            aria-label={live ? "暂停自动刷新" : "恢复自动刷新"}
+            aria-label={live ? "Pause Auto Refresh" : "Restore Auto Refresh"}
           >
             {live ? <PauseIcon /> : <PlayIcon />}
-            {live ? "自动刷新" : "已暂停"}
+            {live ? "Auto Refresh" : "Paused"}
           </Button>
         </div>
       </div>
@@ -646,7 +646,7 @@ export function BroadcastTab({ taskId }: { taskId: string }) {
           className="flex w-full items-center justify-center gap-1.5 border-b bg-primary/10 py-1.5 text-xs font-medium text-primary hover:bg-primary/15"
         >
           <ArrowUpToLineIcon className="size-3.5" />
-          {pending > 99 ? "99+" : pending} 条新播报 · 回到最新
+          {pending > 99 ? "99+" : pending} new broadcasts · Jump to latest
         </button>
       )}
 
@@ -659,7 +659,7 @@ export function BroadcastTab({ taskId }: { taskId: string }) {
           </div>
         ) : items.length === 0 ? (
           <p className="py-10 text-center text-sm text-muted-foreground">
-            {query || kinds.length > 0 ? "没有符合条件的播报。" : "这个任务还没有产生探索节点。"}
+            {query || kinds.length > 0 ? "No matching broadcasts." : "This task has yet to produce an exploratory node."}
           </p>
         ) : (
           groups.map((group) => (
@@ -696,7 +696,7 @@ export function BroadcastTab({ taskId }: { taskId: string }) {
             <SelectGroup>
               {PAGE_SIZES.map((n) => (
                 <SelectItem key={n} value={String(n)}>
-                  {n} / 页
+                  {n} / page
                 </SelectItem>
               ))}
             </SelectGroup>
@@ -711,7 +711,7 @@ export function BroadcastTab({ taskId }: { taskId: string }) {
             size="icon-sm"
             disabled={page <= 1}
             onClick={() => setPage((p) => Math.max(1, p - 1))}
-            aria-label="上一页"
+            aria-label={"Previous"}
           >
             <ChevronLeftIcon />
           </Button>
@@ -723,7 +723,7 @@ export function BroadcastTab({ taskId }: { taskId: string }) {
             size="icon-sm"
             disabled={page >= pageCount}
             onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
-            aria-label="下一页"
+            aria-label={"Next"}
           >
             <ChevronRightIcon />
           </Button>

@@ -17,6 +17,11 @@ web/next-env.d.ts
 *.local
 
 # development tools
+.tyan-tools/
+.tyan-cache/
+.tyan-runtime/
+/tyan.exe
+scripts/english-ui-strings.json
 .playwright-mcp/
 .playwright-cli/
 .idea/

@@ -1,4 +1,11 @@
 .git
+.tyan-runtime
+.tyan-cache
+.tyan-tools
+tyan.exe
+.env
+config.json
+jwt.key
 **/node_modules
 web/.next
 web/out

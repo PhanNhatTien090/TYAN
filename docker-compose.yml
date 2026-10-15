@@ -3,7 +3,7 @@ services:
     image: postgres:16-alpine
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-artex}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?请在 .env 设置 POSTGRES_PASSWORD}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
       POSTGRES_DB: ${POSTGRES_DB:-artex}
     volumes:
       - pgdata:/var/lib/postgresql/data
@@ -15,10 +15,9 @@ services:
     restart: unless-stopped
 
   artex:
-    # 镜像源由本仓库自维护（原 autumn27/artex 已从 Docker Hub 删除）。
-    # 正常部署直接拉取本镜像；拉取失败（或想改代码）时本地构建：
-    #   docker compose build
-    image: mianhuatang11/artex:${ARTEX_TAG:-latest}
+    # Build this TYAN checkout; upstream images do not include the custom UI.
+    # Build mã nguồn TYAN hiện tại để có giao diện tùy chỉnh.
+    image: tyan:local
     build:
       context: .
       dockerfile: Dockerfile

@@ -42,10 +42,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
-              <Link prefetch={false} href="/function/tasks">
+              <Link prefetch={false} href="/dashboard" className="tyan-brand">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/logo.png" alt="ARTEX" width={40} height={40} className="shrink-0" />
-                <span className="font-semibold text-base">{APP_CONFIG.name}</span>
+                <img src="/tyan-mark.svg" alt="TYAN" width={36} height={36} className="shrink-0" />
+                <span className="flex flex-col gap-1 group-data-[collapsible=icon]:hidden">
+                  <span className="font-mono text-lg font-bold tracking-[0.22em]">{APP_CONFIG.name}</span>
+                  <span className="font-mono text-[9px] tracking-[0.15em] text-muted-foreground">SECURITY OPERATIONS</span>
+                </span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>

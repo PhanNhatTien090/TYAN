@@ -1,0 +1,105 @@
+/* TYAN's shared design system applies to every route and primitive. */
+:root[data-theme-preset="default"] {
+  --radius: 0.75rem;
+  --background: #f2f7f5;
+  --foreground: #142d27;
+  --card: #ffffff;
+  --card-foreground: #142d27;
+  --popover: #ffffff;
+  --popover-foreground: #142d27;
+  --primary: #087957;
+  --primary-foreground: #ffffff;
+  --secondary: #e6efeb;
+  --secondary-foreground: #204b3d;
+  --muted: #eaf1ee;
+  --muted-foreground: #566f66;
+  --accent: #dbf4e9;
+  --accent-foreground: #075c42;
+  --border: #d3e1da;
+  --input: #c6d9cf;
+  --ring: #15956c;
+  --chart-1: #13966a;
+  --chart-2: #1696ac;
+  --chart-3: #9475db;
+  --chart-4: #c18b22;
+  --chart-5: #dd657d;
+  --sidebar: #eaf2ee;
+  --sidebar-foreground: #23483b;
+  --sidebar-primary: #087957;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #d6ede2;
+  --sidebar-accent-foreground: #075c42;
+  --sidebar-border: #d3e1da;
+  --sidebar-ring: #15956c;
+}
+
+:root.dark[data-theme-preset="default"] {
+  --background: #080e12;
+  --foreground: #dcebe5;
+  --card: #0e171d;
+  --card-foreground: #dcebe5;
+  --popover: #111d24;
+  --popover-foreground: #dcebe5;
+  --primary: #69f5c3;
+  --primary-foreground: #062319;
+  --secondary: #17262d;
+  --secondary-foreground: #c3ddd2;
+  --muted: #142128;
+  --muted-foreground: #91a9a0;
+  --accent: #15332b;
+  --accent-foreground: #87f7cf;
+  --border: #23343c;
+  --input: #2a4048;
+  --ring: #45cfa0;
+  --chart-1: #69f5c3;
+  --chart-2: #58cce4;
+  --chart-3: #ad97fa;
+  --chart-4: #ecc16e;
+  --chart-5: #f38da0;
+  --sidebar: #0a1318;
+  --sidebar-foreground: #adc5bb;
+  --sidebar-primary: #69f5c3;
+  --sidebar-primary-foreground: #062319;
+  --sidebar-accent: #15332b;
+  --sidebar-accent-foreground: #87f7cf;
+  --sidebar-border: #23343c;
+  --sidebar-ring: #45cfa0;
+}
+
+body {
+  background-image: radial-gradient(ellipse at 80% 0%, color-mix(in srgb, var(--primary) 5%, transparent), transparent 55%);
+  background-attachment: fixed;
+}
+
+::selection { background: color-mix(in srgb, var(--primary) 28%, transparent); }
+
+[data-slot="sidebar-header"] { padding: 1.25rem 0.85rem; border-bottom: 1px solid var(--sidebar-border); }
+[data-slot="sidebar-header"] [data-slot="sidebar-menu-button"] { height: 3.5rem; }
+[data-slot="sidebar-group-label"] { font-family: var(--font-mono), monospace; font-size: 0.625rem; letter-spacing: 0.16em; text-transform: uppercase; }
+[data-slot="sidebar-menu-button"] { min-height: 2.35rem; transition: background-color 150ms, color 150ms; }
+[data-slot="sidebar-menu-button"][data-active="true"] { box-shadow: inset 2px 0 var(--primary); }
+[data-slot="sidebar-menu-button"][data-active="true"] svg { color: var(--primary); }
+[data-slot="sidebar-footer"] { border-top: 1px solid var(--sidebar-border); padding: 0.75rem; }
+[data-slot="card"] { background-image: linear-gradient(135deg, color-mix(in srgb, var(--primary) 2%, transparent), transparent 45%); box-shadow: 0 4px 24px #00000008; }
+[data-slot="card-title"] { letter-spacing: -0.025em; }
+[data-slot="table-head"] { font-family: var(--font-mono), monospace; font-size: 0.6875rem; letter-spacing: 0.035em; background: color-mix(in srgb, var(--muted) 70%, transparent); }
+[data-slot="table-cell"] { padding-top: 0.85rem; padding-bottom: 0.85rem; }
+[data-slot="input"], [data-slot="textarea"], [data-slot="select-trigger"] { background-color: color-mix(in srgb, var(--background) 65%, transparent); }
+[data-slot="button"] { transition: background-color 150ms, border-color 150ms, box-shadow 150ms; }
+[data-slot="button"][data-variant="default"] { box-shadow: 0 2px 12px color-mix(in srgb, var(--primary) 10%, transparent); }
+[data-slot="tabs-list"] { border: 1px solid var(--border); }
+[data-slot="dialog-content"] { box-shadow: 0 20px 100px #00000050; }
+header { border-bottom-color: var(--border); }
+h1, h2 { letter-spacing: -0.035em; }
+
+.tyan-auth-panel {
+  background-color: #091714;
+  background-image: linear-gradient(#69f5c30a 1px, transparent 1px), linear-gradient(90deg, #69f5c30a 1px, transparent 1px), radial-gradient(ellipse at center, #123a2b, transparent 70%);
+  background-size: 40px 40px, 40px 40px, auto;
+  color: #69f5c3;
+  border-right: 1px solid #233b30;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}

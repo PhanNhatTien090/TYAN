@@ -1,0 +1,10 @@
+TYAN is a customized distribution of ARTEX.
+Upstream source: https://github.com/mhtsec/ARTEX
+
+The ARTEX authors and contributors retain all applicable copyrights.
+The original project license is preserved in LICENSE. Component-specific
+licenses and notices remain applicable, including web/LICENSE.
+
+TYAN modifications include display branding, interface styling, English
+interface text, and English/Vietnamese repository documentation.
+Original Chinese project documentation is retained in README.zh-CN.md.

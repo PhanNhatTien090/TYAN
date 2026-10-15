@@ -19,6 +19,10 @@ import (
 )
 
 func TestChatMentionParsing(t *testing.T) {
+	english, err := parseChatMentions("@[Finding#12 Example] @[漏洞#12 duplicate] @[Endpoint#34 GET /api]")
+	if err != nil || len(english) != 2 || english[0].Kind != "finding" || english[1].Kind != "endpoint" {
+		t.Fatalf("English/legacy references=%+v err=%v", english, err)
+	}
 	refs, err := parseChatMentions("分析@[漏洞#12 同名] 与 @[接口#34 GET /api] @[漏洞#12 重复] user@example.com @漏洞")
 	if err != nil || len(refs) != 2 || refs[0].Kind != "finding" || refs[1].ID != 34 {
 		t.Fatalf("refs=%+v err=%v", refs, err)

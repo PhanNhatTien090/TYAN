@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { activeMention, mentionSearch, mentionToken, selectedMentions } from "./chat-mentions.ts";
+import { readFileSync } from "node:fs";
+import { activeMention, mentionKinds, mentionSearch, mentionToken, selectedMentions } from "./chat-mentions.ts";
 
 test("mention trigger supports Chinese and cursor placement without hijacking email", () => {
   assert.equal(activeMention("user@example.com", 16), null);
@@ -25,7 +26,24 @@ test("tokens roundtrip labels and removing one reference preserves its neighbors
   const value = `分析 ${first} 和 ${second}`;
   const selected = selectedMentions(value);
   assert.equal(selected.length, 2);
-  assert.equal(selected[0].label, "漏洞 #12 · 标题（1） 描述");
+  assert.equal(selected[0].label, "Finding #12 · 标题(1) 描述");
   const next = value.slice(0, selected[0].start) + value.slice(selected[0].start + selected[0].token.length);
   assert.equal(selectedMentions(next)[0].token, second);
+});
+
+test("English references and legacy history remain readable", () => {
+  assert.equal(mentionSearch("finding SQL injection").kind, "finding");
+  assert.equal(mentionSearch("organization Acme").kind, "company");
+  assert.equal(selectedMentions("@[Finding#12 SQL injection] @[漏洞#13 Existing finding]").length, 2);
+});
+
+test("every visible reference kind is accepted by the backend wire pattern", () => {
+  const source = readFileSync(new URL("../../../server/chat_mentions.go", import.meta.url), "utf8");
+  const expression = source.match(/chatMentionPattern = regexp\.MustCompile\(`([^`]+)`\)/)?.[1];
+  assert.ok(expression);
+  const pattern = new RegExp(expression);
+  for (const item of mentionKinds) {
+    assert.ok(pattern.test(`@[${item.label}#12 Example]`), item.label);
+    assert.ok(pattern.test(`@[${item.legacy}#12 Existing]`), item.legacy);
+  }
 });

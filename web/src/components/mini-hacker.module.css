@@ -1,0 +1,73 @@
+.layer {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  pointer-events: none;
+  --pet-size: 64px;
+  --pet-left: 12px;
+  --pet-right: calc(100vw - var(--pet-size) - 12px);
+  --pet-top: 56px;
+  --pet-bottom: calc(100dvh - var(--pet-size) - 44px);
+}
+
+.runner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: var(--pet-size);
+  height: var(--pet-size);
+  animation: patrol 90s linear infinite;
+  will-change: transform;
+}
+
+.sprite { width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 2px 5px #0005); }
+.character { animation: facing 90s steps(1, end) infinite; }
+.bob { animation: bob 0.65s ease-in-out infinite; }
+.leftFoot, .rightFoot { transform-box: fill-box; transform-origin: center top; animation: step 0.65s ease-in-out infinite alternate; }
+.rightFoot { animation-delay: -0.65s; }
+.eyes { transform-box: fill-box; transform-origin: center; animation: blink 6s infinite; }
+
+.controls {
+  position: absolute;
+  bottom: max(8px, env(safe-area-inset-bottom));
+  right: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 5px 3px 9px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--muted-foreground);
+  pointer-events: auto;
+  box-shadow: 0 2px 8px #0002;
+}
+.label { font-family: var(--font-mono), monospace; font-size: 8px; letter-spacing: 0.08em; }
+.controls button { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; cursor: pointer; }
+.controls button:hover { background: var(--accent); color: var(--accent-foreground); }
+.controls button:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.controls button:disabled { opacity: 0.4; cursor: default; }
+
+.layer[data-paused="true"] * { animation-play-state: paused; }
+
+@keyframes patrol {
+  0%, 100% { transform: translate(var(--pet-left), var(--pet-bottom)); }
+  36% { transform: translate(var(--pet-right), var(--pet-bottom)); }
+  50% { transform: translate(var(--pet-right), var(--pet-top)); }
+  86% { transform: translate(var(--pet-left), var(--pet-top)); }
+}
+@keyframes facing { 0% { transform: scaleX(1); } 50% { transform: scaleX(-1); } 86% { transform: scaleX(1); } }
+@keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
+@keyframes step { from { transform: rotate(-12deg); } to { transform: rotate(12deg); } }
+@keyframes blink { 0%, 44%, 48%, 100% { transform: scaleY(1); } 46% { transform: scaleY(0.1); } }
+
+@media (max-width: 640px) {
+  .layer { --pet-size: 48px; }
+  .label { display: none; }
+  .controls button { width: 32px; height: 32px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .layer * { animation: none !important; }
+  .runner { transform: translate(var(--pet-left), var(--pet-bottom)); will-change: auto; }
+}
+@media print { .layer { display: none; } }
