@@ -1,0 +1,36 @@
+name: Bug report / Báo lỗi
+description: Report a reproducible problem with TYAN / Báo lỗi có thể tái hiện
+title: "[Bug] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for helping improve TYAN. English or Vietnamese is welcome.
+        Never include passwords, API keys, private targets, or sensitive evidence.
+        Vui lòng xóa mật khẩu, API key và dữ liệu riêng tư trước khi gửi.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / Vấn đề
+      description: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce / Cách tái hiện
+      description: Describe the steps using an isolated local lab and non-sensitive sample data.
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment / Môi trường
+      description: Include your TYAN commit/version, OS, installation method, and browser if relevant.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Sanitized logs or screenshots / Log hoặc ảnh đã xóa dữ liệu nhạy cảm
+      description: Optional. Review every attachment before uploading.
