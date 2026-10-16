@@ -894,5 +894,8 @@
       "source_sha256": "bb260cc5d815f10142cc1677273e15b0dc5e8df110fb66a303b5a1b34607dc4a",
       "mode": "tyan-review-adaptation"
     }
-  ]
+  ],
+  "native_agent_tools": 14,
+  "native_review_agents": 6,
+  "operator_workflow_adapters": 17
 }

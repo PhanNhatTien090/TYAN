@@ -23,6 +23,8 @@ func researchSpecs() []researchToolSpec {
 		"title": strParam("Affected control and observation"), "summary": strParam("Short factual summary"), "steps": map[string]any{"type": "array", "items": strParam("Local reproduction step")}, "expected": strParam("Expected control behavior"), "actual": strParam("Observed result"), "impact": strParam("Demonstrated consequence"), "remediation": strParam("Fix and retest condition"), "evidence": map[string]any{"type": "array", "items": strParam("Evidence record reference")}, "scope_confirmed": map[string]any{"type": "boolean"}, "preconditions_proven": map[string]any{"type": "boolean"}, "vector": strParam("CVSS:4.0 vector"), "claimed_score": map[string]any{"type": "number"},
 	}}
 	return []researchToolSpec{
+		{"research_har_summary", "har", "Summarize saved HAR traffic metadata without replaying requests. Omits headers, cookies and bodies.", input},
+		{"research_model_coverage", "coverage", "Validate supplied system model nodes/edges and calculate self-reported review coverage and gaps.", objSchema(map[string]any{"model": map[string]any{"type": "object", "description": "System model with nodes[{id,kind,label,status,references[]}], edges[{from,to,relation}], questions[]. Kinds: tech,role,auth,flow,object,feature,hypothesis,boundary. Status: todo,reviewing,reviewed,supported,rejected."}}, "model")},
 		{"research_openapi_summary", "openapi", "Summarize supplied OpenAPI 3.x/Swagger 2.0 JSON or YAML: endpoint/parameter/field names and declared authentication. Offline; no requests or external-reference fetching.", input},
 		{"research_normalize_results", "normalize", "Normalize and deduplicate saved Nuclei JSON/JSONL, ffuf JSON or Nmap XML into unverified observations. Does not run scanners or create findings.", objSchema(map[string]any{"input": strParam("Saved tool output"), "source": map[string]any{"type": "string", "enum": []string{"nuclei", "ffuf", "nmap"}}, "limit": map[string]any{"type": "integer"}}, "input", "source")},
 		{"research_redact_evidence", "redact", "Best-effort local redaction of credential fields, auth/cookie headers and email addresses in supplied text. Manually inspect remaining sensitive data before sharing.", objSchema(map[string]any{"input": strParam("Text to minimize; use a copy of evidence")}, "input")},
@@ -71,6 +73,7 @@ func (s *Server) researchTools() []actool.CoreTool {
 	for _, spec := range researchSpecs() {
 		tools = append(tools, researchReadTool(spec.Name, spec.Description, spec.Schema, func(raw json.RawMessage) (any, error) { return researchkit.Run(spec.Operation, raw) }))
 	}
+	tools = append(tools, s.researchWorkspaceTools()...)
 	return tools
 }
 
@@ -85,14 +88,29 @@ func (s *Server) seedResearchTools() {
 			log.Printf("[research-kit] seed %s: %v", tool.Name(), err)
 		}
 	}
+	toolNames := []string{}
+	for _, t := range s.researchTools() {
+		toolNames = append(toolNames, t.Name())
+	}
+	skillNames := []string{}
+	for _, skill := range researchkit.Catalog("", "") {
+		skillNames = append(skillNames, skill.Name)
+	}
+	for _, role := range researchkit.ReviewRoles() {
+		if err := s.m.pg.SeedResearchRole(role, toolNames, skillNames); err != nil {
+			log.Printf("[research-kit] seed role %s: %v", role.Key, err)
+		}
+	}
 }
 
 func (s *Server) registerResearchRoutes(mux *http.ServeMux) {
+	s.registerResearchWorkspaceRoutes(mux)
+	s.registerResearchWorkflows(mux)
 	mux.HandleFunc("GET /api/research-kit/catalog", func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, 200, map[string]any{"items": researchkit.Catalog(r.URL.Query().Get("q"), r.URL.Query().Get("tech")), "source_commit": researchkit.SourceCommit, "mode": "tyan-review-adaptation"})
 	})
 	mux.HandleFunc("GET /api/research-kit/tools", func(w http.ResponseWriter, r *http.Request) {
-		writeJSON(w, 200, map[string]any{"items": researchkit.Inventory(), "native_tools": 8, "notice": "PATH presence only; no executables were launched or installed."})
+		writeJSON(w, 200, map[string]any{"items": researchkit.Inventory(), "native_tools": len(s.researchTools()), "notice": "PATH presence only; no executables were launched or installed."})
 	})
 	mux.HandleFunc("POST /api/research-kit/run/{operation}", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", "no-store")

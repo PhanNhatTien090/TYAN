@@ -18,6 +18,9 @@ import {
   type ToolAvailability,
 } from "@/lib/research-kit";
 
+import ResearchWorkflows from "./workflows";
+import ResearchWorkspace from "./workspace";
+
 const selectStyle = "min-w-0 rounded-md border bg-background px-3 py-2 text-sm";
 const emptyDraft: FindingDraft = {
   title: "",
@@ -51,6 +54,7 @@ const examples = {
   redact:
     'Authorization: Bearer FAKE_LAB_TOKEN\nCookie: session=FAKE_LAB_SESSION\n{"email":"sample@example.test","password":"FAKE_PASSWORD"}',
   cvss: "CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:L/VI:N/VA:N/SC:N/SI:N/SA:N",
+  har: '{"log":{"entries":[{"request":{"method":"GET","url":"http://127.0.0.1:3000/items/1?session=FAKE"},"response":{"status":200,"content":{"mimeType":"application/json"}},"time":12}]}}',
 };
 
 function ResultView({ result }: { result: ResearchResult | null }) {
@@ -114,9 +118,23 @@ function ResultView({ result }: { result: ResearchResult | null }) {
           {result.items.map((item) => (
             <div className="rounded-lg border p-3" key={item.id}>
               <p className="font-medium">{item.title}</p>
-              <p className="break-all font-mono text-xs text-muted-foreground">{item.url}</p>
+              <p className="break-all font-mono text-muted-foreground text-xs">{item.url}</p>
               <p className="mt-1 text-xs">
                 {item.severity} · {item.status}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
+      {result.entries && (
+        <div className="grid max-h-[560px] gap-2 overflow-auto">
+          {result.entries.map((entry, index) => (
+            <div key={`${entry.method}-${entry.url}-${index}`} className="grid gap-1 rounded-lg border p-3">
+              <p className="break-all font-mono text-xs">
+                {entry.method} {entry.url}
+              </p>
+              <p className="text-sm">
+                HTTP {entry.status} · {entry.mime} · {entry.time_ms} ms
               </p>
             </div>
           ))}
@@ -130,7 +148,7 @@ function ResultView({ result }: { result: ResearchResult | null }) {
               <span className={check.passed ? "text-primary" : "text-muted-foreground"}>
                 {check.passed ? "✓" : "○"} {check.name.replaceAll("_", " ")}
               </span>
-              <p className="mt-1 text-xs text-muted-foreground">{check.detail}</p>
+              <p className="mt-1 text-muted-foreground text-xs">{check.detail}</p>
             </div>
           ))}
         </div>
@@ -141,11 +159,11 @@ function ResultView({ result }: { result: ResearchResult | null }) {
         </pre>
       )}
       {validation.warnings?.map((warning) => (
-        <p key={warning} className="text-xs text-muted-foreground">
+        <p key={warning} className="text-muted-foreground text-xs">
           {warning}
         </p>
       ))}
-      {result.notice && <p className="text-xs text-muted-foreground">{result.notice}</p>}
+      {result.notice && <p className="text-muted-foreground text-xs">{result.notice}</p>}
     </div>
   );
 }
@@ -158,7 +176,7 @@ export default function ResearchKitPage() {
     [category, setCategory] = useState("all");
   const [sourceCommit, setSourceCommit] = useState("");
   const [error, setError] = useState("");
-  const [operation, setOperation] = useState<"openapi" | "normalize" | "redact" | "cvss">("openapi");
+  const [operation, setOperation] = useState<"openapi" | "normalize" | "redact" | "cvss" | "har">("openapi");
   const [input, setInput] = useState(""),
     [format, setFormat] = useState("nuclei"),
     [claimed, setClaimed] = useState("");
@@ -247,13 +265,15 @@ export default function ResearchKitPage() {
     <div className="flex min-w-0 flex-col gap-6 p-4 md:p-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="mb-2 font-mono text-xs tracking-widest text-primary">TYAN / RESEARCH WORKSPACE</p>
-          <h1 className="font-mono text-2xl font-bold">Research Kit</h1>
+          <p className="mb-2 font-mono text-primary text-xs tracking-widest">TYAN / RESEARCH WORKSPACE</p>
+          <h1 className="font-bold font-mono text-2xl">Research Kit</h1>
           <p className="mt-2 max-w-3xl text-muted-foreground">
             Topic-focused review skills, offline artifact analysis and evidence-driven report drafts.
           </p>
         </div>
-        <div className="rounded-lg border px-4 py-3 font-mono text-xs">65 review skills · 8 native helpers</div>
+        <div className="rounded-lg border px-4 py-3 font-mono text-xs">
+          65 review skills · 14 native tools · 6 review agents
+        </div>
       </div>
       {error && (
         <p role="alert" className="rounded-lg border border-destructive/40 p-3 text-destructive">
@@ -271,6 +291,8 @@ export default function ResearchKitPage() {
             Analyze artifacts
           </TabsTrigger>
           <TabsTrigger value="report">Finding & report</TabsTrigger>
+          <TabsTrigger value="workspace">Knowledge & models</TabsTrigger>
+          <TabsTrigger value="workflows">Workflows</TabsTrigger>
           <TabsTrigger
             value="tools"
             onClick={() => {
@@ -343,7 +365,7 @@ export default function ResearchKitPage() {
               </form>
             </CardContent>
           </Card>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             {visible.length} matching packages · TYAN review adaptations from claude-redteam{" "}
             <span className="font-mono">{sourceCommit.slice(0, 8)}</span>. Copy a name to invoke through the existing
             Skill tool.
@@ -369,13 +391,13 @@ export default function ResearchKitPage() {
                       {copied === skill.name ? <Check className="size-4" /> : <Copy className="size-4" />}
                     </Button>
                   </div>
-                  <p className="font-mono text-xs text-primary">{skill.category} / review workflow</p>
+                  <p className="font-mono text-primary text-xs">{skill.category} / review workflow</p>
                 </CardHeader>
                 <CardContent className="grid gap-3">
-                  <p className="text-sm text-muted-foreground">{skill.description}</p>
+                  <p className="text-muted-foreground text-sm">{skill.description}</p>
                   <p className="break-words font-mono text-xs">{skill.tags.join(" · ")}</p>
                   <details>
-                    <summary className="cursor-pointer text-xs text-muted-foreground">Source and compatibility</summary>
+                    <summary className="cursor-pointer text-muted-foreground text-xs">Source and compatibility</summary>
                     <p className="mt-2 break-all text-xs">
                       {skill.source_path}
                       <br />
@@ -389,11 +411,17 @@ export default function ResearchKitPage() {
             ))}
           </div>
         </TabsContent>
+        <TabsContent value="workspace">
+          <ResearchWorkspace />
+        </TabsContent>
+        <TabsContent value="workflows">
+          <ResearchWorkflows />
+        </TabsContent>
         <TabsContent value="analyze" className="grid gap-4 xl:grid-cols-2">
           <Card>
             <CardHeader>
               <CardTitle>Analyze a supplied artifact</CardTitle>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-muted-foreground text-sm">
                 These helpers run locally without contacting targets or calling an LLM.
               </p>
             </CardHeader>
@@ -417,6 +445,7 @@ export default function ResearchKitPage() {
                     <option value="normalize">Normalize saved tool output</option>
                     <option value="redact">Minimize evidence text</option>
                     <option value="cvss">Compute CVSS 4.0</option>
+                    <option value="har">Saved HAR metadata</option>
                   </select>
                 </label>
                 {operation === "normalize" && (
@@ -439,6 +468,7 @@ export default function ResearchKitPage() {
                   {operation === "cvss" ? "CVSS 4.0 vector" : "Artifact text"}
                   <Textarea
                     id="research-artifact"
+                    aria-label={operation === "cvss" ? "CVSS 4.0 vector" : "Artifact text"}
                     required
                     className="min-h-64 font-mono text-xs"
                     value={input}
@@ -495,6 +525,19 @@ export default function ResearchKitPage() {
             </CardHeader>
             <CardContent className="min-w-0">
               <ResultView result={result} />
+              {result && (
+                <Button
+                  variant="outline"
+                  className="mt-4"
+                  onClick={() => {
+                    void navigator.clipboard
+                      .writeText(JSON.stringify(result, null, 2))
+                      .catch((e) => setError(String(e)));
+                  }}
+                >
+                  Copy result JSON
+                </Button>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -502,7 +545,7 @@ export default function ResearchKitPage() {
           <Card>
             <CardHeader>
               <CardTitle>Finding draft</CardTitle>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-muted-foreground text-sm">
                 Structure the evidence before review. This form does not create or publish a finding.
               </p>
             </CardHeader>
@@ -521,6 +564,7 @@ export default function ResearchKitPage() {
                   {label}
                   <Textarea
                     id={`draft-${key}`}
+                    aria-label={label}
                     value={draft[key]}
                     onChange={(e) => setDraft({ ...draft, [key]: e.target.value })}
                   />
@@ -530,6 +574,7 @@ export default function ResearchKitPage() {
                 Reproduction steps (one per line)
                 <Textarea
                   id="draft-steps"
+                  aria-label="Reproduction steps (one per line)"
                   value={draft.steps.join("\n")}
                   onChange={(e) => setDraft({ ...draft, steps: e.target.value.split("\n") })}
                 />
@@ -538,6 +583,7 @@ export default function ResearchKitPage() {
                 Evidence references (one per line)
                 <Textarea
                   id="draft-evidence"
+                  aria-label="Evidence references (one per line)"
                   placeholder="traffic:123"
                   value={draft.evidence.join("\n")}
                   onChange={(e) => setDraft({ ...draft, evidence: e.target.value.split("\n") })}
@@ -610,9 +656,9 @@ export default function ResearchKitPage() {
                   Refresh
                 </Button>
               </div>
-              <p className="text-sm text-muted-foreground">
-                The eight native Research Kit helpers work without these programs. PATH detection does not verify
-                versions or functionality; no program is executed or installed here.
+              <p className="text-muted-foreground text-sm">
+                The native Research Kit tools work without these programs. PATH detection does not verify versions or
+                functionality; no program is executed or installed here.
               </p>
             </CardHeader>
             <CardContent>
@@ -621,7 +667,7 @@ export default function ResearchKitPage() {
                   <div key={tool.name} className="flex justify-between gap-3 rounded-lg border p-3">
                     <div>
                       <p className="font-mono">{tool.name}</p>
-                      <p className="text-xs text-muted-foreground">{tool.category}</p>
+                      <p className="text-muted-foreground text-xs">{tool.category}</p>
                     </div>
                     <span className={`self-center text-xs ${tool.on_path ? "text-primary" : "text-muted-foreground"}`}>
                       {tool.on_path ? "On PATH" : "Not on PATH"}

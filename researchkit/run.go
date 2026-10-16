@@ -13,6 +13,7 @@ type Request struct {
 	ClaimedScore *float64      `json:"claimed_score,omitempty"`
 	Limit        int           `json:"limit,omitempty"`
 	Finding      *FindingDraft `json:"finding,omitempty"`
+	Model        *SystemModel  `json:"model,omitempty"`
 }
 
 func Run(operation string, raw []byte) (any, error) {
@@ -21,6 +22,13 @@ func Run(operation string, raw []byte) (any, error) {
 		return nil, err
 	}
 	switch operation {
+	case "har":
+		return HARSummary(request.Input)
+	case "coverage":
+		if request.Model == nil {
+			return nil, errors.New("model is required")
+		}
+		return ModelCoverage(*request.Model)
 	case "openapi":
 		return ParseOpenAPI(request.Input, request.Limit)
 	case "normalize":

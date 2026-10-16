@@ -25,3 +25,8 @@ See integrations/claude-redteam/README.md and source.json for adaptation scope
 and per-skill provenance. Upstream model-offload hooks and execution engines
 are not included. CVSS 4.0 uses github.com/pandatix/go-cvss v0.6.4 (MIT);
 its upstream license remains applicable.
+
+Further native adaptations include versioned research records and revisions,
+task-scoped session notes, system-model coverage/graphs, API catalog storage,
+saved HAR comparison, six conversational review roles and 17 operator workflow
+adapters. They do not claim compatibility with upstream execution engines.

@@ -21,7 +21,7 @@ Task schedules, finding cases, encrypted test-account credentials, operator hand
 
 ## Research Kit
 
-**Functions → Research Kit** adds 65 topic-specific review skills and eight native agent helpers: skill discovery, executable readiness, OpenAPI/Swagger summaries, saved Nuclei/ffuf/Nmap normalization, evidence redaction, CVSS 4.0 scoring, finding readiness and report drafts. The workbench includes Markdown preview and basic DOCX export.
+**Functions → Research Kit** adds 65 topic-specific review skills and 14 native agent tools: skill discovery, executable readiness, OpenAPI/Swagger summaries, saved Nuclei/ffuf/Nmap normalization, evidence redaction, CVSS 4.0 scoring, finding readiness and report drafts. The workbench includes Markdown/basic DOCX export, a versioned knowledge base and session memory, API catalogs, system model graphs/coverage, six conversational review agents and 17 structured operator workflows. See [workspace details](integrations/claude-redteam/WORKSPACE.md).
 
 Adapted from `claude-redteam`, with pinned provenance and MIT attribution. These are review adaptations, not copies of upstream execution engines or model-offload hooks. See the [user guide](docs/RESEARCH-KIT.md) and [complete integration mapping](integrations/claude-redteam/README.md) for setup and limits. Rebuild and restart to use the new code.
 

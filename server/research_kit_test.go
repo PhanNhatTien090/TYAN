@@ -17,10 +17,16 @@ import (
 func TestResearchKitNativeToolContracts(t *testing.T) {
 	s := &Server{}
 	tools := s.researchTools()
-	if len(tools) != 8 {
+	if len(tools) != 14 {
 		t.Fatalf("tools=%d", len(tools))
 	}
 	for _, tool := range tools {
+		if tool.Name() == "research_workspace_put" {
+			if tool.IsReadOnly(json.RawMessage(`{}`)) {
+				t.Fatal("workspace write marked read-only")
+			}
+			continue
+		}
 		if !tool.IsReadOnly(json.RawMessage(`{}`)) || !tool.IsConcurrencySafe(json.RawMessage(`{}`)) {
 			t.Fatalf("wrong contract: %s", tool.Name())
 		}

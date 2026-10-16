@@ -30,7 +30,7 @@ export interface FindingDraft {
   vector?: string;
   claimed_score?: number;
 }
-export type ResearchOperation = "openapi" | "normalize" | "redact" | "cvss" | "validate" | "report";
+export type ResearchOperation = "openapi" | "normalize" | "redact" | "cvss" | "validate" | "report" | "har";
 export interface ResearchResult {
   total?: number;
   input_count?: number;
@@ -56,6 +56,7 @@ export interface ResearchResult {
     response_fields: string[];
   }[];
   items?: { id: string; title: string; url: string; severity: string; status: string }[];
+  entries?: { method: string; url: string; status: number; mime: string; time_ms: number }[];
   validation?: ResearchResult;
 }
 

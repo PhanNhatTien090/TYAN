@@ -1581,3 +1581,26 @@ CREATE TABLE IF NOT EXISTS task_schedule_history (
     created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS idx_schedule_history ON task_schedule_history(schedule_id,id DESC);
+
+-- Native Research Kit knowledge, session notes, API catalogs and system models.
+CREATE TABLE IF NOT EXISTS research_records (
+    id BIGSERIAL PRIMARY KEY,
+    kind TEXT NOT NULL CHECK (kind IN ('kb','memory','model','api')),
+    task_id BIGINT REFERENCES tasks(id) ON DELETE CASCADE,
+    scope_id BIGINT GENERATED ALWAYS AS (COALESCE(task_id,0)) STORED,
+    key TEXT NOT NULL,
+    title TEXT NOT NULL,
+    version BIGINT NOT NULL DEFAULT 1 CHECK(version>0),
+    content JSONB NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CHECK (kind='kb' OR task_id IS NOT NULL),
+    UNIQUE(kind,scope_id,key)
+);
+CREATE TABLE IF NOT EXISTS research_revisions (
+    record_id BIGINT NOT NULL REFERENCES research_records(id) ON DELETE CASCADE,
+    version BIGINT NOT NULL,
+    title TEXT NOT NULL,
+    content JSONB NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    PRIMARY KEY(record_id,version)
+);
