@@ -4,6 +4,10 @@ This edition selectively integrates application features from the supplied ARTEX
 
 ## English
 
+### Research Kit
+
+Functions → Research Kit adds 65 review skill adaptations and eight native helpers, including offline artifact analysis, CVSS 4.0, finding readiness and Markdown/basic DOCX drafts. See the [bilingual user guide](docs/RESEARCH-KIT.md) and [complete source-to-TYAN mapping](integrations/claude-redteam/README.md). Tool readiness detects 19 optional executable names on PATH; it does not install or run them. This is a native review adaptation rather than full upstream runtime parity.
+
 ### Where to find the new features
 
 | Feature | Location | Behavior |

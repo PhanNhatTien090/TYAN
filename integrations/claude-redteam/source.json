@@ -1,0 +1,898 @@
+{
+  "repository": "https://github.com/PhanNhatTien090/claude-redteam",
+  "commit": "329fc1273c202844cd041e08e74298d683258158",
+  "source_skills": 65,
+  "native_skill_packages": 65,
+  "adaptation": "Review workflows, not operational or model-offload parity.",
+  "skills": [
+    {
+      "slug": "apk-redteam-pipeline",
+      "name": "rt-apk-redteam-pipeline",
+      "description": "Android application review: evidence-driven review of supplied source, configuration and isolated local lab fixtures.",
+      "category": "mobile",
+      "tags": [
+        "android",
+        "apk",
+        "mobile"
+      ],
+      "source_path": "_global/skills/apk-redteam-pipeline.md",
+      "source_sha256": "ac033416e51c68854882da069bb32b437804a280bea0a4e58e2f0079e147ba28",
+      "mode": "tyan-review-adaptation"
+    },
+    {
+      "slug": "attack-contracts",
+      "name": "rt-attack-contracts",
+      "description": "Bounded lab test contract: evidence-driven review of supplied source, configuration and isolated local lab fixtures.",
+      "category": "workflow",
+      "tags": [
+        "workflow"
+      ],
+      "source_path": "_global/skills/attack-contracts.md",
+      "source_sha256": "cc1a2c57b3b943b5e54c2433f5cc1f1a2c1a05f7acf6c7dbf4e2a93ef1324583",
+      "mode": "tyan-review-adaptation"
+    },
+    {
+      "slug": "bb-methodology",
+      "name": "rt-bb-methodology",
+      "description": "Evidence-driven lab review lifecycle: evidence-driven review of supplied source, configuration and isolated local lab fixtures.",
+      "category": "workflow",
+      "tags": [
+        "workflow"
+      ],
+      "source_path": "_global/skills/bb-methodology.md",
+      "source_sha256": "e60234f248116f2a872e2ff3f16ddb0b507473aec4aeeca37144851b72cef1f8",
+      "mode": "tyan-review-adaptation"
+    },
+    {
+      "slug": "bug-bounty",
+      "name": "rt-bug-bounty",
+      "description": "Local engagement workflow: evidence-driven review of supplied source, configuration and isolated local lab fixtures.",
+      "category": "workflow",
+      "tags": [
+        "workflow"
+      ],
+      "source_path": "_global/skills/bug-bounty/SKILL.md",
+      "source_sha256": "42dee2a953f019662226b7499b4a27903e4ce1a284e85c72df1ce86168548fa8",
+      "mode": "tyan-review-adaptation"
+    },
+    {
+      "slug": "bugcrowd-reporting",
+      "name": "rt-bugcrowd-reporting",
+      "description": "Submission readiness review: evidence-driven review of supplied source, configuration and isolated local lab fixtures.",
+      "category": "reporting",
+      "tags": [
+        "reporting"
+      ],
+      "source_path": "_global/skills/bugcrowd-reporting.md",
+      "source_sha256": "3e024d24db59a92d7540aa0e100c491b7a848fb38af348c040eb11f283df2c84",
+      "mode": "tyan-review-adaptation"
+    },
+    {
+      "slug": "cloud-iam-deep",
+      "name": "rt-cloud-iam-deep",
+      "description": "Cloud IAM effective-permission review: evidence-driven review of supplied source, configuration and isolated local lab fixtures.",
+      "category": "cloud",
+      "tags": [
+        "aws",
+        "azure",
+        "cloud",
+        "gcp",
+        "k8s",
+        "kubernetes"
+      ],
+      "source_path": "_global/skills/cloud-iam-deep.md",
+      "source_sha256": "777ebfdcf8106cca6e2d1e6b7c983217d088f4fed654742da7bdb043230d6218",
+      "mode": "tyan-review-adaptation"
+    },
+    {
+      "slug": "compact-guide",
+      "name": "rt-compact-guide",
+      "description": "Transparent session handoff: evidence-driven review of supplied source, configuration and isolated local lab fixtures.",
+      "category": "workflow",
+      "tags": [
+        "workflow"
+      ],
+      "source_path": "_global/skills/compact-guide.md",
+      "source_sha256": "dc189bcb2fcd51e7328559755c0e90d3eb6fc807c3ad5d18a902bdf563ed7d1a",
+      "mode": "tyan-review-adaptation"
+    },
+    {
+      "slug": "dynamic-cve",
+      "name": "rt-dynamic-cve",
+      "description": "Advisory-to-inventory correlation: evidence-driven review of supplied source, configuration and isolated local lab fixtures.",
+      "category": "inventory",
+      "tags": [
+        "inventory"
+      ],
+      "source_path": "_global/skills/dynamic-cve.md",
+      "source_sha256": "d2b7d090927e3fedfaf56cf82814b2bc3a07cdc7cf0062b94153703d58d4a255",
+      "mode": "tyan-review-adaptation"
+    },
+    {
+      "slug": "enterprise-vpn-attack",
+      "name": "rt-enterprise-vpn-attack",
+      "description": "Remote-access gateway review: evidence-driven review of supplied source, configuration and isolated local lab fixtures.",
+      "category": "infrastructure",
+      "tags": [
+        "infrastructure"
+      ],
+      "source_path": "_global/skills/enterprise-vpn-attack.md",
+      "source_sha256": "6737c1639163d7ea29eb724d74439d5b74c110848adc03e0b4e7d638a9aa47d6",
+      "mode": "tyan-review-adaptation"
+    },
+    {
+      "slug": "evidence-hygiene",
+      "name": "rt-evidence-hygiene",
+      "description": "Evidence minimization workflow: evidence-driven review of supplied source, configuration and isolated local lab fixtures.",
+      "category": "evidence",
+      "tags": [
+        "evidence",
+        "privacy"
+      ],
+      "source_path": "_global/skills/evidence-hygiene.md",
+      "source_sha256": "98421bcb854615f37d40dfa85165f0971a05d322d7a2044d794df00372eba8f3",
+      "mode": "tyan-review-adaptation"
+    },
+    {
+      "slug": "hackthebox",
+      "name": "rt-hackthebox",
+      "description": "Training lab methodology: evidence-driven review of supplied source, configuration and isolated local lab fixtures.",
+      "category": "workflow",
+      "tags": [
+        "workflow"
+      ],
+      "source_path": "_global/skills/hackthebox.md",
+      "source_sha256": "bddb0e074890effb3e785b9da24986e3406049242b2888bbbdbce843050a0a22",
+      "mode": "tyan-review-adaptation"
+    },
+    {
+      "slug": "hunt-agent-sandbox",
+      "name": "rt-hunt-agent-sandbox",
+      "description": "Agent confinement review: evidence-driven review of supplied source, configuration and isolated local lab fixtures.",
+      "category": "ai",
+      "tags": [
+        "ai"
+      ],
+      "source_path": "_global/skills/hunt-agent-sandbox/SKILL.md",
+      "source_sha256": "05b226acf5049ccbd92e900e62fa4051d32c181fe1126c4f7ed13fed72dd0b5d",
+      "mode": "tyan-review-adaptation"
+    },
+    {
+      "slug": "hunt-api-misconfig",
+      "name": "rt-hunt-api-misconfig",
+      "description": "API configuration review: evidence-driven review of supplied source, configuration and isolated local lab fixtures.",
+      "category": "web",
+      "tags": [
+        "express",
+        "jwt",
+        "llm",
+        "node",
+        "python",
+        "sap",
+        "web"
+      ],
+      "source_path": "_global/skills/hunt-api-misconfig.md",
+      "source_sha256": "70d1e34762925a9ed0e18aa858984c983835e7cfabc6599c5be62db8f6994303",
+      "mode": "tyan-review-adaptation"
+    },
+    {
+      "slug": "hunt-aspnet",
+      "name": "rt-hunt-aspnet",
+      "description": "ASP.NET application review: evidence-driven review of supplied source, configuration and isolated local lab fixtures.",
+      "category": "web",
+      "tags": [
+        "aspnet",
+        "iis",
+        "sharepoint",
+        "web"
+      ],
+      "source_path": "_global/skills/hunt-aspnet.md",
+      "source_sha256": "63158f271e259e91e724eb68a6054aa29bfc0e7b6a5b5ae21d71ca6134694534",
+      "mode": "tyan-review-adaptation"
+    },
+    {
+      "slug": "hunt-ato",
+      "name": "rt-hunt-ato",
+      "description": "Account lifecycle review: evidence-driven review of supplied source, configuration and isolated local lab fixtures.",
+      "category": "identity",
+      "tags": [
+        "identity",
+        "oauth"
+      ],
+      "source_path": "_global/skills/hunt-ato.md",
+      "source_sha256": "910f1e02904abacb43d3c3e2fe901b974be12c8185db196e264fbbdb36ae1183",
+      "mode": "tyan-review-adaptation"
+    },
+    {
+      "slug": "hunt-auth-bypass",
+      "name": "rt-hunt-auth-bypass",
+      "description": "Authentication enforcement review: evidence-driven review of supplied source, configuration and isolated local lab fixtures.",
+      "category": "identity",
+      "tags": [
+        "graphql",
+        "identity",
+        "jwt",
+        "saml"
+      ],
+      "source_path": "_global/skills/hunt-auth-bypass.md",
+      "source_sha256": "b6d2948765c10ac9ea6070be03ed174b0f46c3a816912fb5f335697d8024fdde",
+      "mode": "tyan-review-adaptation"
+    },
+    {
+      "slug": "hunt-business-logic",
+      "name": "rt-hunt-business-logic",
+      "description": "Business invariant review: evidence-driven review of supplied source, configuration and isolated local lab fixtures.",
+      "category": "web",
+      "tags": [
+        "sap",
+        "web"
+      ],
+      "source_path": "_global/skills/hunt-business-logic.md",
+      "source_sha256": "95a71cffc03333944a4db8d14bbebc5eb614a3cf251e913cb7c57163fbef19cf",
+      "mode": "tyan-review-adaptation"
+    },
+    {
+      "slug": "hunt-cache-poison",
+      "name": "rt-hunt-cache-poison",
+      "description": "Cache isolation review: evidence-driven review of supplied source, configuration and isolated local lab fixtures.",
+      "category": "web",
+      "tags": [
+        "akamai",
+        "cloudflare",
+        "nginx",
+        "web"
+      ],
+      "source_path": "_global/skills/hunt-cache-poison.md",
+      "source_sha256": "83eca3d0294a0add56ee5971d5924ebdfd9328893259cb15702d753ddf841ff2",
+      "mode": "tyan-review-adaptation"
+    },
+    {
+      "slug": "hunt-cloud-misconfig",
+      "name": "rt-hunt-cloud-misconfig",
+      "description": "Cloud resource policy review: evidence-driven review of supplied source, configuration and isolated local lab fixtures.",
+      "category": "cloud",
+      "tags": [
+        "aws",
+        "azure",
+        "cloud",
+        "gcp"
+      ],
+      "source_path": "_global/skills/hunt-cloud-misconfig.md",
+      "source_sha256": "9a408d1dbe5a397c1723c4272976a92d3d66f0dbf72c074495ca8dbde413f9ab",
+      "mode": "tyan-review-adaptation"
+    },
+    {
+      "slug": "hunt-csrf",
+      "name": "rt-hunt-csrf",
+      "description": "Cross-site request control review: evidence-driven review of supplied source, configuration and isolated local lab fixtures.",
+      "category": "web",
+      "tags": [
+        "web"
+      ],
+      "source_path": "_global/skills/hunt-csrf.md",
+      "source_sha256": "1bf6facacff14bfea15bb48b7e3ee30a17664a9a6bea0c41da4166859e8ff6fa",
+      "mode": "tyan-review-adaptation"
+    },
+    {
+      "slug": "hunt-dispatch",
+      "name": "rt-hunt-dispatch",
+      "description": "Skill selection workflow: evidence-driven review of supplied source, configuration and isolated local lab fixtures.",
+      "category": "workflow",
+      "tags": [
+        "workflow"
+      ],
+      "source_path": "_global/skills/hunt-dispatch.md",
+      "source_sha256": "f75cecbf75f2c884977676d90363cfbcc2d06173e1e18ff4fce57474a4cf5284",
+      "mode": "tyan-review-adaptation"
+    },
+    {
+      "slug": "hunt-dom-clobbering",
+      "name": "rt-hunt-dom-clobbering",
+      "description": "DOM property isolation review: evidence-driven review of supplied source, configuration and isolated local lab fixtures.",
+      "category": "web",
+      "tags": [
+        "web"
+      ],
+      "source_path": "_global/skills/hunt-dom-clobbering.md",
+      "source_sha256": "43ab96a16daaf93b2f998cf79d4a71e746e6a5dbd5e830f10c89ef6548c01516",
+      "mode": "tyan-review-adaptation"
+    },
+    {
+      "slug": "hunt-file-upload",
+      "name": "rt-hunt-file-upload",
+      "description": "File handling review: evidence-driven review of supplied source, configuration and isolated local lab fixtures.",
+      "category": "web",
+      "tags": [
+        "aspnet",
+        "iis",
+        "laravel",
+        "php",
+        "upload",
+        "web",
+        "wordpress"
+      ],
+      "source_path": "_global/skills/hunt-file-upload.md",
+      "source_sha256": "bd48ebd13a2258f5b16af476b36ec44e19d895e476fffcaa83c34682d51e7e1f",
+      "mode": "tyan-review-adaptation"
+    },
+    {
+      "slug": "hunt-flutter-app",
+      "name": "rt-hunt-flutter-app",
+      "description": "Flutter application review: evidence-driven review of supplied source, configuration and isolated local lab fixtures.",
+      "category": "mobile",
+      "tags": [
+        "mobile"
+      ],
+      "source_path": "_global/skills/hunt-flutter-app.md",
+      "source_sha256": "96d48ccc2e555f9c32b91073defbe3975ee16331eadadaf9113afccb657699a6",
+      "mode": "tyan-review-adaptation"
+    },
+    {
+      "slug": "hunt-flutter-crypto",
+      "name": "rt-hunt-flutter-crypto",
+      "description": "Flutter cryptography review: evidence-driven review of supplied source, configuration and isolated local lab fixtures.",
+      "category": "mobile",
+      "tags": [
+        "mobile"
+      ],
+      "source_path": "_global/skills/hunt-flutter-crypto.md",
+      "source_sha256": "e979ee7e8b2c8e3e6024b7753af469f4bc8056c3d290de24575e9c7eb0354e3a",
+      "mode": "tyan-review-adaptation"
+    },
+    {
+      "slug": "hunt-google-api-key",
+      "name": "rt-hunt-google-api-key",
+      "description": "Google and Firebase configuration review: evidence-driven review of supplied source, configuration and isolated local lab fixtures.",
+      "category": "cloud",
+      "tags": [
+        "cloud"
+      ],
+      "source_path": "_global/skills/hunt-google-api-key.md",
+      "source_sha256": "8d37200184ea8ad1a6d5472839cadbf457ebc63e3d90ff315d529dca9986163c",
+      "mode": "tyan-review-adaptation"
+    },
+    {
+      "slug": "hunt-graphql",
+      "name": "rt-hunt-graphql",
+      "description": "GraphQL authorization and resource review: evidence-driven review of supplied source, configuration and isolated local lab fixtures.",
+      "category": "web",
+      "tags": [
+        "graphql",
+        "node",
+        "web"
+      ],
+      "source_path": "_global/skills/hunt-graphql.md",
+      "source_sha256": "a77220c31044618fea3dbbb4a2d384a1dd908418708f115f03f2b575d4d1e4f8",
+      "mode": "tyan-review-adaptation"
+    },
+    {
+      "slug": "hunt-http-smuggling",
+      "name": "rt-hunt-http-smuggling",
+      "description": "HTTP framing consistency review: evidence-driven review of supplied source, configuration and isolated local lab fixtures.",
+      "category": "web",
+      "tags": [
+        "akamai",
+        "cloudflare",
+        "nginx",
+        "web"
+      ],
+      "source_path": "_global/skills/hunt-http-smuggling.md",
+      "source_sha256": "fdae6d4b2788c054e0a6437c9e2c349cb605c2619bd088c25c66f04e035604e2",
+      "mode": "tyan-review-adaptation"
+    },
+    {
+      "slug": "hunt-idor",
+      "name": "rt-hunt-idor",
+      "description": "Object authorization review: evidence-driven review of supplied source, configuration and isolated local lab fixtures.",
+      "category": "identity",
+      "tags": [
+        "graphql",
+        "identity",
+        "sap"
+      ],
+      "source_path": "_global/skills/hunt-idor.md",
+      "source_sha256": "17d935e250305a98395387e80544a685234adaf52a51c88864d45e11487b4063",
+      "mode": "tyan-review-adaptation"
+    },
+    {
+      "slug": "hunt-ios-data-storage",
+      "name": "rt-hunt-ios-data-storage",
+      "description": "iOS storage and keychain review: evidence-driven review of supplied source, configuration and isolated local lab fixtures.",
+      "category": "mobile",
+      "tags": [
+        "mobile"
+      ],
+      "source_path": "_global/skills/hunt-ios-data-storage.md",
+      "source_sha256": "5a6228a728fc6a80c94452b8a2fc4ae3deedd3cc948db9ebf32af27847715d99",
+      "mode": "tyan-review-adaptation"
+    },
+    {
+      "slug": "hunt-llm-ai",
+      "name": "rt-hunt-llm-ai",
+      "description": "LLM application trust-boundary review: evidence-driven review of supplied source, configuration and isolated local lab fixtures.",
+      "category": "ai",
+      "tags": [
+        "ai",
+        "chatbot",
+        "llm",
+        "rag",
+        "smartsupport"
+      ],
+      "source_path": "_global/skills/hunt-llm-ai.md",
+      "source_sha256": "2f3ca7468cc7391e9c237ed992ed53d3138284897229c2434a64f92f567e0b88",
+      "mode": "tyan-review-adaptation"
+    },
+    {
+      "slug": "hunt-llm-owasp",
+      "name": "rt-hunt-llm-owasp",
+      "description": "LLM application control coverage: evidence-driven review of supplied source, configuration and isolated local lab fixtures.",
+      "category": "ai",
+      "tags": [
+        "ai",
+        "chatbot",
+        "llm",
+        "rag",
+        "smartsupport"
+      ],
+      "source_path": "_global/skills/hunt-llm-owasp/SKILL.md",
+      "source_sha256": "35657a2c3f539748c87930df2536d4a2bf9799fe1538d0ab63e775ab3e2303a3",
+      "mode": "tyan-review-adaptation"
+    },
+    {
+      "slug": "hunt-mfa-bypass",
+      "name": "rt-hunt-mfa-bypass",
+      "description": "MFA enforcement review: evidence-driven review of supplied source, configuration and isolated local lab fixtures.",
+      "category": "identity",
+      "tags": [
+        "identity"
+      ],
+      "source_path": "_global/skills/hunt-mfa-bypass.md",
+      "source_sha256": "3391a5b98ef1131060295faf9c6fcdc07aea87fe9508c0731885ae52de118bc0",
+      "mode": "tyan-review-adaptation"
+    },
+    {
+      "slug": "hunt-misc",
+      "name": "rt-hunt-misc",
+      "description": "Cross-feature trust-boundary review: evidence-driven review of supplied source, configuration and isolated local lab fixtures.",
+      "category": "web",
+      "tags": [
+        "saml",
+        "web"
+      ],
+      "source_path": "_global/skills/hunt-misc.md",
+      "source_sha256": "b09222138765362f68e50426e04991f3e8dde8b55ab2279cdfb8c05b361e9f46",
+      "mode": "tyan-review-adaptation"
+    },
+    {
+      "slug": "hunt-ntlm-info",
+      "name": "rt-hunt-ntlm-info",
+      "description": "Integrated authentication exposure review: evidence-driven review of supplied source, configuration and isolated local lab fixtures.",
+      "category": "identity",
+      "tags": [
+        "aspnet",
+        "identity",
+        "iis",
+        "sharepoint"
+      ],
+      "source_path": "_global/skills/hunt-ntlm-info.md",
+      "source_sha256": "c4e31e4d530d57640c09fb11b04dfdea8436816b72d4195efc46ecc10f6f5409",
+      "mode": "tyan-review-adaptation"
+    },
+    {
+      "slug": "hunt-oauth",
+      "name": "rt-hunt-oauth",
+      "description": "OAuth and OIDC review: evidence-driven review of supplied source, configuration and isolated local lab fixtures.",
+      "category": "identity",
+      "tags": [
+        "adfs",
+        "identity",
+        "oauth",
+        "okta",
+        "sap"
+      ],
+      "source_path": "_global/skills/hunt-oauth.md",
+      "source_sha256": "c97840899f5210fb43e8f94a9b29963d4f6ce23a7dcef2a01e88280dbb8e714d",
+      "mode": "tyan-review-adaptation"
+    },
+    {
+      "slug": "hunt-postmessage",
+      "name": "rt-hunt-postmessage",
+      "description": "Web messaging review: evidence-driven review of supplied source, configuration and isolated local lab fixtures.",
+      "category": "web",
+      "tags": [
+        "web"
+      ],
+      "source_path": "_global/skills/hunt-postmessage.md",
+      "source_sha256": "e4367e54013d42efb36e1f50074898d5fd82effa86db5e510d6aa3d31e70fa24",
+      "mode": "tyan-review-adaptation"
+    },
+    {
+      "slug": "hunt-prototype-pollution",
+      "name": "rt-hunt-prototype-pollution",
+      "description": "JavaScript object boundary review: evidence-driven review of supplied source, configuration and isolated local lab fixtures.",
+      "category": "web",
+      "tags": [
+        "web"
+      ],
+      "source_path": "_global/skills/hunt-prototype-pollution.md",
+      "source_sha256": "fa46a017dafa076c4aa76d9635d75bcf65640afdf011b350c586bc2436d9d982",
+      "mode": "tyan-review-adaptation"
+    },
+    {
+      "slug": "hunt-race-condition",
+      "name": "rt-hunt-race-condition",
+      "description": "Concurrency control review: evidence-driven review of supplied source, configuration and isolated local lab fixtures.",
+      "category": "web",
+      "tags": [
+        "web"
+      ],
+      "source_path": "_global/skills/hunt-race-condition.md",
+      "source_sha256": "07f5060fdc8ac952a37051b7775b4270eb24c456794b13c6ffb25dcc1eafceae",
+      "mode": "tyan-review-adaptation"
+    },
+    {
+      "slug": "hunt-rce",
+      "name": "rt-hunt-rce",
+      "description": "Execution-boundary review: evidence-driven review of supplied source, configuration and isolated local lab fixtures.",
+      "category": "code",
+      "tags": [
+        "aspnet",
+        "code",
+        "express",
+        "java",
+        "k8s",
+        "kubernetes",
+        "node",
+        "php",
+        "redis",
+        "spring",
+        "upload"
+      ],
+      "source_path": "_global/skills/hunt-rce.md",
+      "source_sha256": "dd5083efd8fd151d9deae93ae2978e7698ddd9e56bafb4a9a0252a12bc7dc8fe",
+      "mode": "tyan-review-adaptation"
+    },
+    {
+      "slug": "hunt-saml",
+      "name": "rt-hunt-saml",
+      "description": "SAML configuration review: evidence-driven review of supplied source, configuration and isolated local lab fixtures.",
+      "category": "identity",
+      "tags": [
+        "adfs",
+        "identity",
+        "oauth",
+        "okta",
+        "saml"
+      ],
+      "source_path": "_global/skills/hunt-saml.md",
+      "source_sha256": "0f84dc94209f9663f0a630f38c3d0595cc9a2e73677454bef24263a8e1cbcf99",
+      "mode": "tyan-review-adaptation"
+    },
+    {
+      "slug": "hunt-sharepoint",
+      "name": "rt-hunt-sharepoint",
+      "description": "SharePoint configuration review: evidence-driven review of supplied source, configuration and isolated local lab fixtures.",
+      "category": "infrastructure",
+      "tags": [
+        "infrastructure",
+        "sharepoint"
+      ],
+      "source_path": "_global/skills/hunt-sharepoint.md",
+      "source_sha256": "943065cab88a6742859aed0430b39f9b334eee3925e677f32dd82c0902cbb0ff",
+      "mode": "tyan-review-adaptation"
+    },
+    {
+      "slug": "hunt-sqli",
+      "name": "rt-hunt-sqli",
+      "description": "Database query construction review: evidence-driven review of supplied source, configuration and isolated local lab fixtures.",
+      "category": "code",
+      "tags": [
+        "code",
+        "django",
+        "laravel",
+        "php",
+        "python",
+        "wordpress"
+      ],
+      "source_path": "_global/skills/hunt-sqli.md",
+      "source_sha256": "97a94b56799f65f415f7aaabc7ef7fb88914f9aecaa193abb536b7daef76aab5",
+      "mode": "tyan-review-adaptation"
+    },
+    {
+      "slug": "hunt-ssrf",
+      "name": "rt-hunt-ssrf",
+      "description": "Server-side fetch policy review: evidence-driven review of supplied source, configuration and isolated local lab fixtures.",
+      "category": "code",
+      "tags": [
+        "aws",
+        "code",
+        "express",
+        "flask",
+        "java",
+        "node",
+        "rag",
+        "redis",
+        "soap",
+        "spring"
+      ],
+      "source_path": "_global/skills/hunt-ssrf.md",
+      "source_sha256": "60759546903c46768456e9bca8b528603157e755fe28ce9344bee0cecc922f93",
+      "mode": "tyan-review-adaptation"
+    },
+    {
+      "slug": "hunt-ssti",
+      "name": "rt-hunt-ssti",
+      "description": "Template trust-boundary review: evidence-driven review of supplied source, configuration and isolated local lab fixtures.",
+      "category": "code",
+      "tags": [
+        "code",
+        "django",
+        "flask",
+        "java",
+        "laravel",
+        "php",
+        "python",
+        "spring"
+      ],
+      "source_path": "_global/skills/hunt-ssti.md",
+      "source_sha256": "031e8744a2842505ffa50a3078a43dbb67bd59f64028477c57fe20c51a5f8dfe",
+      "mode": "tyan-review-adaptation"
+    },
+    {
+      "slug": "hunt-subdomain",
+      "name": "rt-hunt-subdomain",
+      "description": "Domain ownership review: evidence-driven review of supplied source, configuration and isolated local lab fixtures.",
+      "category": "inventory",
+      "tags": [
+        "inventory"
+      ],
+      "source_path": "_global/skills/hunt-subdomain.md",
+      "source_sha256": "ca2d6ef3b697b1250326a2e94255d240fb92f320aa4a3007ad1d1ae2c171ce84",
+      "mode": "tyan-review-adaptation"
+    },
+    {
+      "slug": "hunt-xss",
+      "name": "rt-hunt-xss",
+      "description": "Browser output encoding review: evidence-driven review of supplied source, configuration and isolated local lab fixtures.",
+      "category": "web",
+      "tags": [
+        "web",
+        "wordpress"
+      ],
+      "source_path": "_global/skills/hunt-xss.md",
+      "source_sha256": "f2e0b6c49cf04496ffd9c38f135c9b8a016a4a0db5a0bb18bf34c0d16958cacc",
+      "mode": "tyan-review-adaptation"
+    },
+    {
+      "slug": "hunt-xxe",
+      "name": "rt-hunt-xxe",
+      "description": "XML parser configuration review: evidence-driven review of supplied source, configuration and isolated local lab fixtures.",
+      "category": "code",
+      "tags": [
+        "code",
+        "java",
+        "soap",
+        "spring"
+      ],
+      "source_path": "_global/skills/hunt-xxe.md",
+      "source_sha256": "96898c03b497d551b3a7b3d2a3ac46b232d92c2e23af96526e584b35d2b3f3e1",
+      "mode": "tyan-review-adaptation"
+    },
+    {
+      "slug": "interactsh",
+      "name": "rt-interactsh",
+      "description": "Callback evidence review: evidence-driven review of supplied source, configuration and isolated local lab fixtures.",
+      "category": "evidence",
+      "tags": [
+        "evidence"
+      ],
+      "source_path": "_global/skills/interactsh.md",
+      "source_sha256": "0f134b2a8a4c8e75ab91113d70a22509b6f3340cb83e7d7d88574b15af607477",
+      "mode": "tyan-review-adaptation"
+    },
+    {
+      "slug": "ios-dynamic-frida",
+      "name": "rt-ios-dynamic-frida",
+      "description": "Instrumented iOS lab review: evidence-driven review of supplied source, configuration and isolated local lab fixtures.",
+      "category": "mobile",
+      "tags": [
+        "mobile"
+      ],
+      "source_path": "_global/skills/ios-dynamic-frida.md",
+      "source_sha256": "c778ba5505ee3c4927c37759b1f8db062c1106cb342f16e7742ecff8f1362142",
+      "mode": "tyan-review-adaptation"
+    },
+    {
+      "slug": "ios-redteam-pipeline",
+      "name": "rt-ios-redteam-pipeline",
+      "description": "iOS application review: evidence-driven review of supplied source, configuration and isolated local lab fixtures.",
+      "category": "mobile",
+      "tags": [
+        "mobile"
+      ],
+      "source_path": "_global/skills/ios-redteam-pipeline.md",
+      "source_sha256": "d38983b923204b56d23cf20495c9400170f6f1a33b53cb92aad79b13e4e76e03",
+      "mode": "tyan-review-adaptation"
+    },
+    {
+      "slug": "m365-entra-attack",
+      "name": "rt-m365-entra-attack",
+      "description": "Entra ID and M365 policy review: evidence-driven review of supplied source, configuration and isolated local lab fixtures.",
+      "category": "identity",
+      "tags": [
+        "adfs",
+        "azure",
+        "identity"
+      ],
+      "source_path": "_global/skills/m365-entra-attack.md",
+      "source_sha256": "bc980a1151e2a9954b8b23756e647e01747d0d494b25ad68a3504b207c3984dc",
+      "mode": "tyan-review-adaptation"
+    },
+    {
+      "slug": "mid-engagement-ir-detection",
+      "name": "rt-mid-engagement-ir-detection",
+      "description": "Unexpected incident handoff: evidence-driven review of supplied source, configuration and isolated local lab fixtures.",
+      "category": "workflow",
+      "tags": [
+        "workflow"
+      ],
+      "source_path": "_global/skills/mid-engagement-ir-detection.md",
+      "source_sha256": "30d3761b0326d2176777cd4e896270349f3fa3259ffde8cc9dbf7a99f7434a1d",
+      "mode": "tyan-review-adaptation"
+    },
+    {
+      "slug": "offensive-osint",
+      "name": "rt-offensive-osint",
+      "description": "Supplied asset provenance review: evidence-driven review of supplied source, configuration and isolated local lab fixtures.",
+      "category": "inventory",
+      "tags": [
+        "github",
+        "inventory"
+      ],
+      "source_path": "_global/skills/offensive-osint/SKILL.md",
+      "source_sha256": "8738a5ebc925feb285a97da26522650d291642629da015b2a88c2b6363702cbd",
+      "mode": "tyan-review-adaptation"
+    },
+    {
+      "slug": "okta-attack",
+      "name": "rt-okta-attack",
+      "description": "Okta identity policy review: evidence-driven review of supplied source, configuration and isolated local lab fixtures.",
+      "category": "identity",
+      "tags": [
+        "identity",
+        "okta"
+      ],
+      "source_path": "_global/skills/okta-attack.md",
+      "source_sha256": "5212a67c1ce466ad33863d5715d53dab8e730091f020b4db9c16112049351fb9",
+      "mode": "tyan-review-adaptation"
+    },
+    {
+      "slug": "redteam-mindset",
+      "name": "rt-redteam-mindset",
+      "description": "Control-oriented review discipline: evidence-driven review of supplied source, configuration and isolated local lab fixtures.",
+      "category": "workflow",
+      "tags": [
+        "workflow"
+      ],
+      "source_path": "_global/skills/redteam-mindset.md",
+      "source_sha256": "fb498179da589e586b7d5db139107be208d884647d803dc6aae5f4a75a72961c",
+      "mode": "tyan-review-adaptation"
+    },
+    {
+      "slug": "redteam-report-template",
+      "name": "rt-redteam-report-template",
+      "description": "Engagement report organization: evidence-driven review of supplied source, configuration and isolated local lab fixtures.",
+      "category": "reporting",
+      "tags": [
+        "reporting"
+      ],
+      "source_path": "_global/skills/redteam-report-template.md",
+      "source_sha256": "69d89bcf7324d44fa2b4dadbbfc501c61a9f31a3271e71c7617119d6c8115364",
+      "mode": "tyan-review-adaptation"
+    },
+    {
+      "slug": "report-writing",
+      "name": "rt-report-writing",
+      "description": "Structured finding report workflow: evidence-driven review of supplied source, configuration and isolated local lab fixtures.",
+      "category": "reporting",
+      "tags": [
+        "cvss",
+        "report",
+        "reporting"
+      ],
+      "source_path": "_global/skills/report-writing.md",
+      "source_sha256": "3c553ee5377faf9e111b396eb9a439b342b24883234734bb9d6d8b610fe469fb",
+      "mode": "tyan-review-adaptation"
+    },
+    {
+      "slug": "security-arsenal",
+      "name": "rt-security-arsenal",
+      "description": "Local fixture and tool selection: evidence-driven review of supplied source, configuration and isolated local lab fixtures.",
+      "category": "workflow",
+      "tags": [
+        "workflow"
+      ],
+      "source_path": "_global/skills/security-arsenal.md",
+      "source_sha256": "e7c17e4916a300b2c080ec90c1e11b879de3207f02d332490dc470b2e595daf8",
+      "mode": "tyan-review-adaptation"
+    },
+    {
+      "slug": "source-code-scanning",
+      "name": "rt-source-code-scanning",
+      "description": "Source code review workflow: evidence-driven review of supplied source, configuration and isolated local lab fixtures.",
+      "category": "code",
+      "tags": [
+        "code",
+        "go",
+        "golang",
+        "javascript",
+        "rust",
+        "typescript"
+      ],
+      "source_path": "_global/skills/source-code-scanning.md",
+      "source_sha256": "b27a0679343b58e45deef17159bdf31ba1054574a6351381f52e6975d53dad18",
+      "mode": "tyan-review-adaptation"
+    },
+    {
+      "slug": "supply-chain-attack-recon",
+      "name": "rt-supply-chain-attack-recon",
+      "description": "Software supply-chain review: evidence-driven review of supplied source, configuration and isolated local lab fixtures.",
+      "category": "code",
+      "tags": [
+        "code",
+        "github"
+      ],
+      "source_path": "_global/skills/supply-chain-attack-recon.md",
+      "source_sha256": "e9c44988861928b92476eeaaa128a6e616208608656ebe8e268fa75733706c62",
+      "mode": "tyan-review-adaptation"
+    },
+    {
+      "slug": "techstack-identification",
+      "name": "rt-techstack-identification",
+      "description": "Technology inventory and skill routing: evidence-driven review of supplied source, configuration and isolated local lab fixtures.",
+      "category": "inventory",
+      "tags": [
+        "inventory"
+      ],
+      "source_path": "_global/skills/techstack-identification.md",
+      "source_sha256": "6877d1d077a6f0404c8a776ebea88d4feaaac452642fc7aceccf4cdd70f45dda",
+      "mode": "tyan-review-adaptation"
+    },
+    {
+      "slug": "triage-validation",
+      "name": "rt-triage-validation",
+      "description": "Seven-gate finding review: evidence-driven review of supplied source, configuration and isolated local lab fixtures.",
+      "category": "reporting",
+      "tags": [
+        "reporting"
+      ],
+      "source_path": "_global/skills/triage-validation.md",
+      "source_sha256": "61f23b6e0dfff90cc90651ddc6bef78c3bd8ce733fdb1e6a36b0bfb8fd18a01b",
+      "mode": "tyan-review-adaptation"
+    },
+    {
+      "slug": "vmware-vcenter-attack",
+      "name": "rt-vmware-vcenter-attack",
+      "description": "Virtualization management review: evidence-driven review of supplied source, configuration and isolated local lab fixtures.",
+      "category": "infrastructure",
+      "tags": [
+        "infrastructure"
+      ],
+      "source_path": "_global/skills/vmware-vcenter-attack.md",
+      "source_sha256": "0348c5f88979bf1a94b429931565ec318dcce811371dea36b4095ea42b653529",
+      "mode": "tyan-review-adaptation"
+    },
+    {
+      "slug": "web2-recon",
+      "name": "rt-web2-recon",
+      "description": "Local lab surface inventory: evidence-driven review of supplied source, configuration and isolated local lab fixtures.",
+      "category": "inventory",
+      "tags": [
+        "inventory"
+      ],
+      "source_path": "_global/skills/web2-recon.md",
+      "source_sha256": "bb260cc5d815f10142cc1677273e15b0dc5e8df110fb66a303b5a1b34607dc4a",
+      "mode": "tyan-review-adaptation"
+    }
+  ]
+}

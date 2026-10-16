@@ -19,6 +19,14 @@ Thông tin tác giả và những người đóng góp cho ARTEX được giữ 
 Đã bổ sung lịch tác vụ, finding cases, credentials mã hóa, hỏi người vận hành, lớp access gate và extension capture metadata cho lab. Xem [vị trí chức năng, cấu hình và lưu ý nâng cấp](FEATURES.md) trước khi dùng. Giữ nguyên toàn bộ giới hạn sử dụng hiện tại.
 
 
+## Research Kit
+
+**Functions → Research Kit** bổ sung 65 skill review theo chủ đề và 8 helper native cho agent: tra cứu skill, kiểm tra sự hiện diện tool, tóm tắt OpenAPI/Swagger, chuẩn hóa kết quả Nuclei/ffuf/Nmap đã lưu, che dữ liệu nhạy cảm, tính CVSS 4.0, kiểm tra finding và soạn báo cáo. Có xem trước Markdown và xuất DOCX cơ bản.
+
+Chuyển thể từ `claude-redteam`, giữ nguồn truy vết và giấy phép MIT. Đây là các bản review, không phải bản sao engine thực thi hay hook offload mô hình của nguồn. Xem [hướng dẫn](docs/RESEARCH-KIT.md) và [bảng phân tích tích hợp](integrations/claude-redteam/README.vi.md). Cần build và khởi động lại để dùng code mới.
+
+![Research Kit phân tích OpenAPI mẫu trong lab cục bộ](screenshots/tyan-research-kit.png)
+
 ## Hình ảnh giao diện
 
 ![Dashboard TYAN với dữ liệu mẫu](screenshots/tyan-dashboard.png)

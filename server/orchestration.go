@@ -40,6 +40,7 @@ func jsonResult(v any) (actool.Result, error) {
 func (s *Server) hostTools() ([]actool.CoreTool, map[string][]string) {
 	tools := append(s.m.HostTools(), s.orchestrationTools()...)
 	tools = append(tools, s.findingRetestTools()...)
+	tools = append(tools, s.researchTools()...)
 	tools = append(tools, s.platformTools()...) // platform operation tools (create/edit skills/tools/MCP, for Auto)
 	custom, err := s.customTools()
 	if err != nil {
@@ -514,6 +515,7 @@ func (s *Server) seedOrchestrationTools() {
 	s.seedFindingTrafficTools()       // adds optional evidence params and read-only evidence tools, preserving user config
 	s.seedFindingWorkflowTools()
 	s.seedFindingCaseTools()
+	s.seedResearchTools()
 	// Note: pentest's default tool bindings need no migration — BuiltinToolSeeds already seeds
 	// list_assets/insert_assets/report_finding/list_findings/list_companies together with
 	// pentest at fresh initialization (no old DBs exist in this project, so no migration).

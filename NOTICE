@@ -15,3 +15,13 @@ Archive SHA-256: cf68d43d60e1534fdf3282d1632a78a727065a5db72bdeb0473d241252bd11c
 No archive Git commit was provided. Existing ARTEX attribution and AGPL license
 are retained. TYAN adaptations include credential encryption, metadata-only
 lab capture, additional feature screens and Windows compatibility fixes.
+
+Research Kit review workflows are adapted from PhanNhatTien090/claude-redteam,
+copyright (c) 2026 tienphan, under the MIT license.
+Source: https://github.com/PhanNhatTien090/claude-redteam
+Pinned commit: 329fc1273c202844cd041e08e74298d683258158
+The MIT notice is preserved in integrations/claude-redteam/LICENSE.
+See integrations/claude-redteam/README.md and source.json for adaptation scope
+and per-skill provenance. Upstream model-offload hooks and execution engines
+are not included. CVSS 4.0 uses github.com/pandatix/go-cvss v0.6.4 (MIT);
+its upstream license remains applicable.

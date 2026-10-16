@@ -874,6 +874,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/agents/{key}/triggers", s.pgCreateTrigger)
 	mux.HandleFunc("PATCH /api/triggers/{id}", s.pgUpdateTrigger)
 	mux.HandleFunc("DELETE /api/triggers/{id}", s.pgDeleteTrigger)
+	s.registerResearchRoutes(mux)
 	mux.HandleFunc("GET /api/schedules", s.listSchedules)
 	mux.HandleFunc("POST /api/schedules", s.createSchedule)
 	mux.HandleFunc("GET /api/schedules/{id}", s.getSchedule)
