@@ -34,12 +34,12 @@ export function useApprovalFocus({ taskId, conversationId }: { taskId?: string; 
             ? source.conversation_id !== conversationId
             : source.task_id !== taskId || source.conversation_id != null
         ) {
-          throw new Error("Inconsistencies between approval sources and current sessions");
+          throw new Error("Approval source does not match the current conversation");
         }
         setState({ id, source, loading: false });
       })
       .catch((e) => {
-        if (!cancelled) setState({ id, error: (e as Error).message || "Unable to locate original execution", loading: false });
+        if (!cancelled) setState({ id, error: (e as Error).message || "Unable to locate the original execution", loading: false });
       });
     return () => {
       cancelled = true;
@@ -78,13 +78,13 @@ export function useApprovalHistory(
         const page = await loadPage(before);
         if (cancelled) return;
         if (!page.items.length || (before > 0 && page.items[0].seq >= before)) {
-          throw new Error("No corresponding tool call found in session, records may have been deleted");
+          throw new Error("Matching tool call not found in the conversation; the record may have been deleted");
         }
         mergePage(page);
         current = page.items;
         before = current[0].seq;
         if (!page.hasMore && !current.some((a) => a.seq === source.seq)) {
-          throw new Error("No corresponding tool call found in session");
+          throw new Error("Matching tool call not found in the conversation");
         }
       }
       if (!cancelled) setResult({ source });
@@ -118,19 +118,19 @@ export function ApprovalExecutionFocus({
     >
       <span className={error ? "text-destructive" : "text-muted-foreground"}>
         {error
-          ? `Unable to locate:${error}`
+          ? `Unable to locate: ${error}`
           : history.ready
-            ? `Expanded approval #${state.id} Corresponding Tool Call`
-            : `Loading approval #${state.id} The place where the conversation takes place...`}
+            ? `Expanded the tool call for approval #${state.id}`
+            : `Loading the conversation position of approval #${state.id}…`}
       </span>
       <div className="flex gap-2">
         {error ? (
           <Button size="sm" variant="outline" onClick={focus.retry}>
-            Retry positioning
+            Retry locate
           </Button>
         ) : null}
         <Button size="sm" variant="ghost" onClick={focus.close}>
-          Unposition
+          Cancel locate
         </Button>
       </div>
     </div>

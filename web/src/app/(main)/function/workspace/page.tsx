@@ -85,7 +85,7 @@ export default function WorkspacePage() {
           setEntries(r.entries);
           setPath(r.path);
         })
-        .catch((e) => toast.error(`Reading directory failed:${(e as Error).message}`))
+        .catch((e) => toast.error(`Failed to read directory: ${(e as Error).message}`))
         .finally(() => setLoading(false));
     },
     [],
@@ -110,7 +110,7 @@ export default function WorkspacePage() {
     api
       .workspaceRead(e.path)
       .then((f) => setEdit({ file: f, content: f.content ?? "", dirty: false, saving: false }))
-      .catch((err) => toast.error(`Failed to open file:${(err as Error).message}`));
+      .catch((err) => toast.error(`Failed to open file: ${(err as Error).message}`));
   };
 
   const saveFile = () => {
@@ -124,20 +124,20 @@ export default function WorkspacePage() {
         load(path);
       })
       .catch((err) => {
-        toast.error(`Failed to save:${(err as Error).message}`);
+        toast.error(`Save failed: ${(err as Error).message}`);
         setEdit((cur) => (cur ? { ...cur, saving: false } : cur));
       });
   };
 
   const del = (e: WorkspaceEntry) => {
-    if (!window.confirm(`Confirm deletion ${e.dir ? "Directory" : "File"} “${e.name}”？${e.dir ? "(with all its elements)" : ""}`)) return;
+    if (!window.confirm(`Confirm deleting ${e.dir ? "directory" : "file"} "${e.name}"?${e.dir ? " (including everything inside)" : ""}`)) return;
     api
       .workspaceDelete(e.path)
       .then(() => {
         toast.success("Deleted");
         load(path);
       })
-      .catch((err) => toast.error(`Failed to delete:${(err as Error).message}`));
+      .catch((err) => toast.error(`Delete failed: ${(err as Error).message}`));
   };
 
   const doUpload = (files: FileList | null) => {
@@ -145,10 +145,10 @@ export default function WorkspacePage() {
     api
       .workspaceUpload(path, Array.from(files))
       .then((r) => {
-        toast.success(`Uploaded ${r.uploaded} File`);
+        toast.success(`Uploaded ${r.uploaded} files`);
         load(path);
       })
-      .catch((err) => toast.error(`Upload failed:${(err as Error).message}`))
+      .catch((err) => toast.error(`Upload failed: ${(err as Error).message}`))
       .finally(() => {
         if (uploadRef.current) uploadRef.current.value = "";
       });
@@ -161,17 +161,17 @@ export default function WorkspacePage() {
     api
       .workspaceMkdir(target)
       .then(() => {
-        toast.success("Created Directory");
+        toast.success("Directory created");
         setMkdirOpen(false);
         setMkdirName("");
         load(path);
       })
-      .catch((err) => toast.error(`Failed to create:${(err as Error).message}`));
+      .catch((err) => toast.error(`Create failed: ${(err as Error).message}`));
   };
 
   return (
     <div className="flex flex-col gap-4">
-      {/* 头部：面包屑 + 操作 */}
+      {/* Header: breadcrumb + actions */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-1 text-sm">
           <HardDriveIcon className="text-muted-foreground mr-1 size-4 shrink-0" />
@@ -198,7 +198,7 @@ export default function WorkspacePage() {
           <Button variant="outline" size="sm" onClick={() => uploadRef.current?.click()}>
             <UploadIcon /> Upload
           </Button>
-          <Button variant="ghost" size="icon" className="size-8" onClick={() => load(path)} title={"Refresh"}>
+          <Button variant="ghost" size="icon" className="size-8" onClick={() => load(path)} title="Refresh">
             <RefreshCwIcon className={cn("size-4", loading && "animate-spin")} />
           </Button>
           <input
@@ -257,8 +257,8 @@ export default function WorkspacePage() {
                           variant="ghost"
                           size="icon"
                           className="size-7"
-                          title={"Download"}
-                          onClick={() => api.workspaceDownload(e.path).catch((err) => toast.error(`Download failed:${(err as Error).message}`))}
+                          title="Download"
+                          onClick={() => api.workspaceDownload(e.path).catch((err) => toast.error(`Download failed: ${(err as Error).message}`))}
                         >
                           <DownloadIcon className="size-3.5" />
                         </Button>
@@ -267,7 +267,7 @@ export default function WorkspacePage() {
                         variant="ghost"
                         size="icon"
                         className="text-destructive size-7"
-                        title={"Delete"}
+                        title="Delete"
                         onClick={() => del(e)}
                       >
                         <Trash2Icon className="size-3.5" />
@@ -281,7 +281,7 @@ export default function WorkspacePage() {
         </CardContent>
       </Card>
 
-      {/* 文件查看 / 编辑 */}
+      {/* File view / edit */}
       <Sheet open={edit !== null} onOpenChange={(o) => !o && setEdit(null)}>
         <SheetContent side="right" className="flex w-full flex-col gap-0 p-0 sm:max-w-2xl">
           {edit && (
@@ -299,10 +299,10 @@ export default function WorkspacePage() {
               {edit.file.binary || edit.file.too_large ? (
                 <div className="flex flex-1 flex-col items-center justify-center gap-3 p-8 text-center">
                   <p className="text-muted-foreground text-sm">
-                    {edit.file.too_large ? "The document is too large to support online preview/editing." : "Binary file does not support online preview/editing."}
+                    {edit.file.too_large ? "File too large for online preview/editing." : "Binary file; online preview/editing is not supported."}
                   </p>
                   <Button variant="outline" onClick={() => api.workspaceDownload(edit.file.path)}>
-                    <DownloadIcon /> Download File
+                    <DownloadIcon /> Download file
                   </Button>
                 </div>
               ) : (
@@ -316,7 +316,7 @@ export default function WorkspacePage() {
                     />
                   </div>
                   <SheetFooter className="flex-row items-center justify-between border-t p-3">
-                    <span className="text-muted-foreground text-xs">{edit.dirty ? "Unsaved Changes" : "Synchronized"}</span>
+                    <span className="text-muted-foreground text-xs">{edit.dirty ? "Unsaved changes" : "In sync"}</span>
                     <div className="flex gap-2">
                       <Button
                         variant="outline"
@@ -336,7 +336,7 @@ export default function WorkspacePage() {
         </SheetContent>
       </Sheet>
 
-      {/* 新建文件夹 */}
+      {/* New folder */}
       <Dialog open={mkdirOpen} onOpenChange={setMkdirOpen}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
@@ -347,7 +347,7 @@ export default function WorkspacePage() {
             value={mkdirName}
             onChange={(e) => setMkdirName(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && doMkdir()}
-            placeholder={"Folder Name"}
+            placeholder="Folder name"
           />
           <DialogFooter>
             <Button variant="outline" onClick={() => setMkdirOpen(false)}>

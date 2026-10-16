@@ -8,3 +8,10 @@ licenses and notices remain applicable, including web/LICENSE.
 TYAN modifications include display branding, interface styling, English
 interface text, and English/Vietnamese repository documentation.
 Original Chinese project documentation is retained in README.zh-CN.md.
+
+Additional application features adapted from the user-supplied ARTEX-en.zip,
+whose README identifies https://github.com/BaaRai/ARTEX as its fork source.
+Archive SHA-256: cf68d43d60e1534fdf3282d1632a78a727065a5db72bdeb0473d241252bd11c4
+No archive Git commit was provided. Existing ARTEX attribution and AGPL license
+are retained. TYAN adaptations include credential encryption, metadata-only
+lab capture, additional feature screens and Windows compatibility fixes.

@@ -66,7 +66,7 @@ export function LinkTrafficDialog({
         selected.finding_id,
         trafficIds.map((traffic_id) => ({ traffic_id })),
       );
-      toast.success(`Linked ${trafficIds.length} traffic records to finding #${selected.finding_id}`);
+      toast.success(`Linked ${trafficIds.length} traffic records to vulnerability #${selected.finding_id}`);
       onBound();
       onClose();
     } catch (e) {
@@ -84,15 +84,15 @@ export function LinkTrafficDialog({
     >
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Link to finding</DialogTitle>
-          <DialogDescription>Selected {trafficIds.length} The traffic is preserved as evidence of a gap.</DialogDescription>
+          <DialogTitle>Link to vulnerability</DialogTitle>
+          <DialogDescription>Save the {trafficIds.length} selected traffic records as evidence of an existing vulnerability.</DialogDescription>
         </DialogHeader>
         <FieldGroup>
           <Field>
-            <FieldLabel htmlFor="link-finding-query">Search findings</FieldLabel>
+            <FieldLabel htmlFor="link-finding-query">Find vulnerability</FieldLabel>
             <Input
               id="link-finding-query"
-              placeholder={"Name / Summary / Gap Category"}
+              placeholder="Name / summary / vulnerability class"
               value={query}
               onChange={(e) => {
                 setQuery(e.target.value);
@@ -126,7 +126,7 @@ export function LinkTrafficDialog({
           ))}
           {!data?.items.length ? (
             <p className="py-6 text-center text-sm text-muted-foreground">
-              {loading ? "Loading…" : "There are no matching holes. Please register them first."}
+              {loading ? "Loading…" : "No matching vulnerabilities; register one first"}
             </p>
           ) : null}
         </div>
@@ -135,7 +135,7 @@ export function LinkTrafficDialog({
             Previous
           </Button>
           <span className="text-xs">
-            Page {page} Pages {data?.total ?? 0} records
+            Page {page} · {data?.total ?? 0} total
           </span>
           <Button
             variant="outline"
@@ -147,14 +147,14 @@ export function LinkTrafficDialog({
           </Button>
         </div>
         <p className="text-sm">
-          {selected ? `Selected Hole:#${selected.finding_id} ${selected.name || selected.vulnclass}` : "Select a finding"}
+          {selected ? `Selected: #${selected.finding_id} ${selected.name || selected.vulnclass}` : "Select a vulnerability"}
         </p>
         <DialogFooter>
           <Button variant="outline" disabled={busy} onClick={onClose}>
             Cancel
           </Button>
           <Button disabled={busy || !selected} onClick={() => void save()}>
-            {busy ? "Saving…" : "Confirm the connection."}
+            {busy ? "Saving…" : "Link"}
           </Button>
         </DialogFooter>
       </DialogContent>

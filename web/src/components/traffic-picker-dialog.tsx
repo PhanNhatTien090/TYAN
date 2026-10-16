@@ -92,7 +92,7 @@ export function TrafficPickerDialog({
         [...selected].map((traffic_id) => ({ traffic_id })),
         contextTask,
       );
-      toast.success(`Assigned ${selected.size} traffic records`);
+      toast.success(`Bound ${selected.size} traffic records`);
       onBound();
       onClose();
     } catch (e) {
@@ -112,9 +112,9 @@ export function TrafficPickerDialog({
       >
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-5xl">
           <DialogHeader>
-            <DialogTitle>Link traffic</DialogTitle>
+            <DialogTitle>Bind traffic</DialogTitle>
             <DialogDescription>
-              Filters and selects multiple requests/responses, and selected records are kept across the page. The use, description and order can be set after binding.
+              Filter and multi-select requests/responses; selections persist across pages. After binding you can set purpose, notes, and order.
             </DialogDescription>
           </DialogHeader>
           <FieldGroup className="flex flex-col gap-3 sm:flex-row">
@@ -123,7 +123,7 @@ export function TrafficPickerDialog({
               <Input
                 id="evidence-host"
                 value={host}
-                placeholder={"Domainname or IP"}
+                placeholder="Domain or IP"
                 onChange={(e) => {
                   setHost(e.target.value);
                   setPage(0);
@@ -131,7 +131,7 @@ export function TrafficPickerDialog({
               />
             </Field>
             <Field>
-              <FieldLabel htmlFor="evidence-method">Method of request</FieldLabel>
+              <FieldLabel htmlFor="evidence-method">Request method</FieldLabel>
               <Select
                 value={method}
                 onValueChange={(v) => {
@@ -159,7 +159,7 @@ export function TrafficPickerDialog({
               <Input
                 id="evidence-query"
                 value={query}
-                placeholder={"URL / text keyword"}
+                placeholder="URL / body keyword"
                 onChange={(e) => {
                   setQuery(e.target.value);
                   setPage(0);
@@ -178,7 +178,7 @@ export function TrafficPickerDialog({
                 <TableRow>
                   <TableHead>
                     <Checkbox
-                      aria-label={"Select a page without bound traffic"}
+                      aria-label="Select unbound traffic on this page"
                       disabled={loading || busy || selectable.length === 0}
                       checked={selectable.length > 0 && selectable.every((e) => selected.has(e.id))}
                       onCheckedChange={(checked) =>
@@ -204,7 +204,7 @@ export function TrafficPickerDialog({
                   <TableRow key={e.id}>
                     <TableCell>
                       <Checkbox
-                        aria-label={`Select flow ${e.id}`}
+                        aria-label={`Select traffic ${e.id}`}
                         checked={selected.has(e.id) || alreadyBound.has(e.id)}
                         disabled={busy || loading || alreadyBound.has(e.id)}
                         onCheckedChange={(checked) => toggle(e.id, checked === true)}
@@ -214,7 +214,7 @@ export function TrafficPickerDialog({
                       <span className="font-mono text-xs">
                         {e.method} {e.url}
                       </span>
-                      {alreadyBound.has(e.id) ? <Badge variant="secondary">Assigned</Badge> : null}
+                      {alreadyBound.has(e.id) ? <Badge variant="secondary">Bound</Badge> : null}
                     </TableCell>
                     <TableCell className="whitespace-nowrap text-xs">
                       {new Date(e.ts).toLocaleString("zh-CN")}
@@ -239,7 +239,7 @@ export function TrafficPickerDialog({
           </div>
           <div className="flex flex-wrap items-center justify-between gap-2">
             <span className="text-sm">
-              Selected {selected.size} Article . {data?.total ?? 0} records
+              {selected.size} selected · {data?.total ?? 0} total
             </span>
             <div className="flex items-center gap-2">
               <Button
@@ -250,7 +250,7 @@ export function TrafficPickerDialog({
               >
                 Previous
               </Button>
-              <span className="text-xs">Page {page + 1} pages</span>
+              <span className="text-xs">Page {page + 1}</span>
               <Button
                 variant="outline"
                 size="sm"
@@ -266,7 +266,7 @@ export function TrafficPickerDialog({
               Cancel
             </Button>
             <Button disabled={busy || selected.size === 0} onClick={() => void save()}>
-              {busy ? "Saving…" : `Link ${selected.size} traffic records`}
+              {busy ? "Saving…" : `Bind ${selected.size} traffic records`}
             </Button>
           </DialogFooter>
         </DialogContent>

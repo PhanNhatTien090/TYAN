@@ -64,13 +64,13 @@ export function TablePagination({
             ))}
           </SelectContent>
         </Select>
-        <span>rows / page</span>
+        <span>per page</span>
         {total > 0 ? (
           <span className="tabular-nums">
-            {from}–{to} / Total {total} records
+            {from}–{to} / {total} total
           </span>
         ) : (
-          <span>Total 0</span>
+          <span>0 total</span>
         )}
       </div>
 
@@ -83,7 +83,7 @@ export function TablePagination({
                 size="icon-sm"
                 disabled={safePage === 1}
                 onClick={() => onPageChange(safePage - 1)}
-                aria-label={"Previous"}
+                aria-label="Previous page"
               >
                 <ChevronLeftIcon className="size-4" />
               </Button>
@@ -112,7 +112,7 @@ export function TablePagination({
                 size="icon-sm"
                 disabled={safePage === totalPages}
                 onClick={() => onPageChange(safePage + 1)}
-                aria-label={"Next"}
+                aria-label="Next page"
               >
                 <ChevronRightIcon className="size-4" />
               </Button>

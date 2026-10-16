@@ -14,7 +14,7 @@ import { api } from "@/lib/api";
 import { statusMeta, toneClasses } from "@/lib/status";
 import type { NotificationChannel, NotificationDelivery } from "@/lib/types";
 
-// DeliveryList 是投递记录表：可按渠道与状态筛选，失败项可手动重发。
+// DeliveryList is the delivery records table: filterable by channel and state, with manual retry for failed items.
 export function DeliveryList({ channels }: { channels: NotificationChannel[] }) {
   const [rows, setRows] = React.useState<NotificationDelivery[]>([]);
   const [total, setTotal] = React.useState(0);
@@ -32,7 +32,7 @@ export function DeliveryList({ channels }: { channels: NotificationChannel[] }) 
         setRows(r.deliveries);
         setTotal(r.total);
       })
-      .catch((e) => toast.error("Failed to read delivery record:" + (e as Error).message))
+      .catch((e) => toast.error("Failed to load delivery records: " + (e as Error).message))
       .finally(() => setLoading(false));
   }, [channelID, state, page]);
   React.useEffect(() => {
@@ -42,10 +42,10 @@ export function DeliveryList({ channels }: { channels: NotificationChannel[] }) 
   async function retry(id: number) {
     try {
       await api.notifyRetryDelivery(id);
-      toast.success("Queued again");
+      toast.success("Re-queued");
       load();
     } catch (e) {
-      toast.error("Failed to resend:" + (e as Error).message);
+      toast.error("Retry failed: " + (e as Error).message);
     }
   }
 
@@ -62,7 +62,7 @@ export function DeliveryList({ channels }: { channels: NotificationChannel[] }) 
           }}
         >
           <SelectTrigger size="sm" className="w-44">
-            <SelectValue placeholder={"All channels"} />
+            <SelectValue placeholder="All channels" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All channels</SelectItem>
@@ -81,7 +81,7 @@ export function DeliveryList({ channels }: { channels: NotificationChannel[] }) 
           }}
         >
           <SelectTrigger size="sm" className="w-32">
-            <SelectValue placeholder={"All statuses"} />
+            <SelectValue placeholder="All statuses" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All statuses</SelectItem>
@@ -95,7 +95,7 @@ export function DeliveryList({ channels }: { channels: NotificationChannel[] }) 
         <Button size="sm" variant="outline" onClick={load} disabled={loading}>
           <RefreshCwIcon className={loading ? "animate-spin" : ""} /> Refresh
         </Button>
-        <span className="text-muted-foreground ml-auto text-xs">Total {total} records</span>
+        <span className="text-muted-foreground ml-auto text-xs">{total} in total</span>
       </div>
 
       <Card className="py-0">
@@ -103,10 +103,10 @@ export function DeliveryList({ channels }: { channels: NotificationChannel[] }) 
           <TableHeader>
             <TableRow>
               <TableHead className="w-40">Time</TableHead>
-              <TableHead>Vulnerabilities</TableHead>
-              <TableHead className="w-40">Channels</TableHead>
+              <TableHead>Vulnerability</TableHead>
+              <TableHead className="w-40">Channel</TableHead>
               <TableHead className="w-24">Status</TableHead>
-              <TableHead className="w-16">Try</TableHead>
+              <TableHead className="w-16">Attempts</TableHead>
               <TableHead>Error</TableHead>
               <TableHead className="w-20" />
             </TableRow>
@@ -115,7 +115,7 @@ export function DeliveryList({ channels }: { channels: NotificationChannel[] }) 
             {rows.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-muted-foreground py-8 text-center">
-                  {loading ? "Loading…" : "No record of delivery"}
+                  {loading ? "Loading…" : "No delivery records"}
                 </TableCell>
               </TableRow>
             ) : (
@@ -132,7 +132,7 @@ export function DeliveryList({ channels }: { channels: NotificationChannel[] }) 
                       <span className="truncate text-sm">{d.title || "(untitled)"}</span>
                       {d.event_kind === "finding_status_changed" && (
                         <Badge variant="outline" className="shrink-0">
-                          Change of Status
+                          Status change
                         </Badge>
                       )}
                     </div>
@@ -146,10 +146,10 @@ export function DeliveryList({ channels }: { channels: NotificationChannel[] }) 
                   <TableCell className="text-muted-foreground text-sm">{d.attempts}</TableCell>
                   <TableCell className="text-muted-foreground max-w-md text-xs break-all">{d.last_error}</TableCell>
                   <TableCell>
-                    {/* 只有失败/跳过的才给重发入口：已送达的重发会造成重复推送。 */}
+                    {/* Only failed/skipped items get a retry button: re-sending a delivered one would duplicate the push. */}
                     {(d.state === "failed" || d.state === "skipped") && (
                       <Button size="sm" variant="outline" onClick={() => retry(d.id)}>
-                        <RotateCcwIcon /> Resend
+                        <RotateCcwIcon /> Retry
                       </Button>
                     )}
                   </TableCell>

@@ -29,8 +29,8 @@ import type { FindingTraffic, FindingTrafficBinding, TrafficEvidenceRole } from 
 
 const ROLES: Record<TrafficEvidenceRole, string> = {
   baseline: "Baseline",
-  proof: "Proof",
-  verification: "Verification",
+  proof: "Vulnerability proof",
+  verification: "Supplementary verification",
   supporting: "Supporting evidence",
 };
 
@@ -106,10 +106,10 @@ export function FindingTrafficPanel({
                 Link traffic
               </Button>
             ) : (
-              <Badge variant="outline">Inherited evidence · Read only</Badge>
+              <Badge variant="outline">Inherited evidence · read-only</Badge>
             )}
           </div>
-          <CardDescription>Organizes requests and responses in the order in which they are reproduced.</CardDescription>
+          <CardDescription>Requests and responses organized in reproduction order. Bound evidence is kept even after raw traffic is purged.</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
           {error ? (
@@ -127,8 +127,8 @@ export function FindingTrafficPanel({
           ) : data.bindings.length === 0 ? (
             <Empty>
               <EmptyHeader>
-                <EmptyTitle>No associated traffic at this time.</EmptyTitle>
-                <EmptyDescription>Normal control, proof of loopholes and additional certification requests may be tied.</EmptyDescription>
+                <EmptyTitle>No linked traffic</EmptyTitle>
+                <EmptyDescription>Link baseline, vulnerability proof, and supplementary verification requests.</EmptyDescription>
               </EmptyHeader>
             </Empty>
           ) : (
@@ -141,7 +141,7 @@ export function FindingTrafficPanel({
                   <Badge variant="secondary">
                     {b.snapshot.method} · {b.snapshot.status}
                   </Badge>
-                  <span className="text-xs text-muted-foreground">Evidence#{b.id}</span>
+                  <span className="text-xs text-muted-foreground">Evidence #{b.id}</span>
                 </div>
                 <Button
                   variant="link"
@@ -157,7 +157,7 @@ export function FindingTrafficPanel({
                   </span>
                   <div className="flex flex-wrap gap-1">
                     <Button variant="outline" size="sm" onClick={() => setPreview(b.id)}>
-                      View exchange
+                      View message
                     </Button>
                     {!readOnly ? (
                       <>
@@ -171,12 +171,12 @@ export function FindingTrafficPanel({
                             setNote(b.note);
                           }}
                         >
-                          Edit Notes
+                          Edit note
                         </Button>
                         <Button
                           variant="ghost"
                           size="icon-sm"
-                          aria-label={`Move Evidence Up ${b.id}`}
+                          aria-label={`Move evidence ${b.id} up`}
                           disabled={busy || index === 0}
                           onClick={() => move(index, -1)}
                         >
@@ -185,7 +185,7 @@ export function FindingTrafficPanel({
                         <Button
                           variant="ghost"
                           size="icon-sm"
-                          aria-label={`Move Evidence Down ${b.id}`}
+                          aria-label={`Move evidence ${b.id} down`}
                           disabled={busy || index === data.bindings.length - 1}
                           onClick={() => move(index, 1)}
                         >
@@ -237,11 +237,11 @@ export function FindingTrafficPanel({
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit traffic evidence</DialogTitle>
-            <DialogDescription>Describe how this group of requests/responses supports the conclusion of the gap.</DialogDescription>
+            <DialogDescription>Explain how this set of requests/responses supports the vulnerability conclusion.</DialogDescription>
           </DialogHeader>
           <FieldGroup>
             <Field>
-              <FieldLabel htmlFor="evidence-role">Purpose</FieldLabel>
+              <FieldLabel htmlFor="evidence-role">Role</FieldLabel>
               <Select value={role} onValueChange={(v) => setRole(v as TrafficEvidenceRole)}>
                 <SelectTrigger id="evidence-role">
                   <SelectValue />
@@ -258,7 +258,7 @@ export function FindingTrafficPanel({
               </Select>
             </Field>
             <Field>
-              <FieldLabel htmlFor="evidence-note">Evidence notes</FieldLabel>
+              <FieldLabel htmlFor="evidence-note">Evidence note</FieldLabel>
               <Textarea id="evidence-note" value={note} onChange={(e) => setNote(e.target.value)} />
             </Field>
           </FieldGroup>
@@ -275,7 +275,7 @@ export function FindingTrafficPanel({
                   );
               }}
             >
-              Save Notes
+              Save note
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -28,12 +28,12 @@ import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import type { Agent, AgentDetail, AgentTrigger, MCPServer, PromptVar, PromptVersion, Settings, SkillItem, Tool } from "@/lib/types";
 
-// Traffic tools are host tools gated by the global 流量捕获 switch: bindable, but
+// Traffic tools are host tools gated by the global traffic capture switch: bindable, but
 // only usable when capture is on. Keep this list in sync with traffic.SeedToolMetas.
 const TRAFFIC_TOOL_KEYS = new Set(["traffic_search", "traffic_get"]);
 
 // AgentEditor is the tabbed editor for one agent, used inside the agents-page
-// drawer (and reused full-page for deep links). Tabs: 配置与提示词 / MCP / Skill /
+// drawer (and reused full-page for deep links). Tabs: Config & Prompt / MCP / Skill /
 // Tools. Config + prompt save as before; visibility + tool bindings toggle live.
 export function AgentEditor({ agentKey, onSaved }: { agentKey: string; onSaved?: () => void }) {
   const [detail, setDetail] = React.useState<AgentDetail | null>(null);
@@ -52,7 +52,7 @@ export function AgentEditor({ agentKey, onSaved }: { agentKey: string; onSaved?:
   const [preview, setPreview] = React.useState("");
   const [maxTurns, setMaxTurns] = React.useState("0");
   const [runSecs, setRunSecs] = React.useState("600");
-  // "" = 跟随(未绑定)；否则为 profile id 字符串
+  // "" = follow (unbound); otherwise a profile id string
   const [llmProfileId, setLlmProfileId] = React.useState("");
   const [llmProfiles, setLlmProfiles] = React.useState<NonNullable<AgentDetail["llm_profiles"]>>([]);
   const [webSearch, setWebSearch] = React.useState(false);
@@ -61,7 +61,7 @@ export function AgentEditor({ agentKey, onSaved }: { agentKey: string; onSaved?:
   const [wrapupDefault, setWrapupDefault] = React.useState("");
   const [wrapupTurns, setWrapupTurns] = React.useState("0");
   const [wrapupTurnsDefault, setWrapupTurnsDefault] = React.useState(5);
-  // 任务级超时收尾词(仅 worker/planner)
+  // task-level timeout wrap-up prompt (worker/planner only)
   const [ttSupported, setTtSupported] = React.useState(false);
   const [ttWrapup, setTtWrapup] = React.useState("");
   const [ttWrapupDefault, setTtWrapupDefault] = React.useState("");
@@ -75,7 +75,7 @@ export function AgentEditor({ agentKey, onSaved }: { agentKey: string; onSaved?:
     api.tools().then(setTools).catch(() => {});
     api.settings().then(setSettings).catch(() => {});
   }, []);
-  // global gates: traffic tools need 流量捕获, web search needs the master switch.
+  // global gates: traffic tools need traffic capture, web search needs the master switch.
   const captureOn = !!settings?.traffic_capture;
   const webSearchGlobalOn = !!settings?.web_search_enabled;
 
@@ -115,71 +115,71 @@ export function AgentEditor({ agentKey, onSaved }: { agentKey: string; onSaved?:
   async function doPreview() {
     try {
       const r = await api.previewAgentPrompt(agentKey, prompt);
-      setPreview(r.error ? "Render error:" + r.error : r.rendered);
+      setPreview(r.error ? "Render error: " + r.error : r.rendered);
     } catch (e) {
-      setPreview("Preview failed:" + (e as Error).message);
+      setPreview("Preview failed: " + (e as Error).message);
     }
   }
   async function savePrompt() {
     try {
       const r = await api.saveAgentPrompt(agentKey, prompt);
-      toast.success(`Saved as Version v${r.version}`);
+      toast.success(`Saved as version v${r.version}`);
       reload();
       onSaved?.();
     } catch (e) {
-      toast.error("Failed to save:" + (e as Error).message);
+      toast.error("Save failed: " + (e as Error).message);
     }
   }
   async function resetPrompt() {
     try {
       const r = await api.resetAgentPrompt(agentKey);
-      toast.success(`Restored to built-in default (v)${r.version}）`);
+      toast.success(`Restored to built-in default (v${r.version})`);
       reload();
     } catch (e) {
-      toast.error("Restore failed:" + (e as Error).message);
+      toast.error("Restore failed: " + (e as Error).message);
     }
   }
   async function saveWrapup() {
     try {
       const turns = Math.max(0, Math.floor(Number(wrapupTurns) || 0));
       await api.saveAgentWrapup(agentKey, wrapup, turns);
-      toast.success(wrapup.trim() || turns > 0 ? "End-of-service configuration saved (the next operation is effective)" : "emptied, built-in default will be used");
+      toast.success(wrapup.trim() || turns > 0 ? "Wrap-up config saved (takes effect on the next run)" : "Cleared; the built-in default will be used");
       reload();
     } catch (e) {
-      toast.error("Failed to save:" + (e as Error).message);
+      toast.error("Save failed: " + (e as Error).message);
     }
   }
   async function resetWrapup() {
     try {
       await api.resetAgentWrapup(agentKey);
-      toast.success("Restored to Internal Default");
+      toast.success("Restored to built-in default");
       reload();
     } catch (e) {
-      toast.error("Restore failed:" + (e as Error).message);
+      toast.error("Restore failed: " + (e as Error).message);
     }
   }
   async function saveTaskTimeoutWrapup() {
     try {
       const turns = Math.max(0, Math.floor(Number(ttTurns) || 0));
       await api.saveAgentTaskTimeoutWrapup(agentKey, ttWrapup, turns);
-      toast.success("Task closeout configuration saved (beginning effective next run)");
+      toast.success("Task timeout wrap-up config saved (takes effect on the next run)");
       reload();
     } catch (e) {
-      toast.error("Failed to save:" + (e as Error).message);
+      toast.error("Save failed: " + (e as Error).message);
     }
   }
   async function resetTaskTimeoutWrapup() {
     try {
       await api.resetAgentTaskTimeoutWrapup(agentKey);
-      toast.success("Restored to Internal Default");
+      toast.success("Restored to built-in default");
       reload();
     } catch (e) {
-      toast.error("Restore failed:" + (e as Error).message);
+      toast.error("Restore failed: " + (e as Error).message);
     }
   }
   async function saveConfig() {
     try {
-      // 只提交本 agent 实际展示的字段，避免把未显示项(如 goals 的 max_turns)覆盖成默认。
+      // Only submit the fields this agent actually displays, to avoid overwriting hidden items (such as max_turns for goals) with defaults.
       const patch: Parameters<typeof api.saveAgentConfig>[1] = {
         llm_profile_id: llmProfileId === "" ? null : Number(llmProfileId),
       };
@@ -190,10 +190,10 @@ export function AgentEditor({ agentKey, onSaved }: { agentKey: string; onSaved?:
       if (showWebSearch) patch.web_search = webSearch;
       if (showInteractiveShell) patch.interactive_shell = interactiveShell;
       await api.saveAgentConfig(agentKey, patch);
-      toast.success("Saved running configuration (effective immediately)");
+      toast.success("Run config saved (effective immediately)");
       reload();
     } catch (e) {
-      toast.error("Failed to save:" + (e as Error).message);
+      toast.error("Save failed: " + (e as Error).message);
     }
   }
   // applyVis optimistically updates, persists, and toasts success/failure. On
@@ -210,7 +210,7 @@ export function AgentEditor({ agentKey, onSaved }: { agentKey: string; onSaved?:
     } catch (e) {
       setMcpVisible(prevMcp);
       setSkillVisible(prevSkill);
-      toast.error("Failed to save:" + (e as Error).message);
+      toast.error("Save failed: " + (e as Error).message);
     }
   }
   function toggleMcp(id: number) {
@@ -219,7 +219,7 @@ export function AgentEditor({ agentKey, onSaved }: { agentKey: string; onSaved?:
     applyVis(
       on ? mcpVisible.filter((x) => x !== id) : [...mcpVisible, id],
       skillVisible,
-      `${on ? "Canceled" : "Enabled"} MCP「${name}* Visible *`,
+      `${on ? "Revoked" : "Granted"} MCP "${name}" visibility`,
     );
   }
   function toggleSkill(name: string) {
@@ -227,7 +227,7 @@ export function AgentEditor({ agentKey, onSaved }: { agentKey: string; onSaved?:
     applyVis(
       mcpVisible,
       on ? skillVisible.filter((x) => x !== name) : [...skillVisible, name],
-      `${on ? "Canceled" : "Enabled"} Skill「${name}* Visible *`,
+      `${on ? "Revoked" : "Granted"} Skill "${name}" visibility`,
     );
   }
   async function toggleTool(t: Tool) {
@@ -242,17 +242,17 @@ export function AgentEditor({ agentKey, onSaved }: { agentKey: string; onSaved?:
         agents: nextAgents,
         enabled: t.enabled,
       });
-      toast.success(`${on ? "Untied" : "Assigned"}Tools${t.key}」`);
-      onSaved?.(); // refresh the list so the card's 工具 count stays in sync
+      toast.success(`${on ? "Unbound" : "Bound"} tool "${t.key}"`);
+      onSaved?.(); // refresh the list so the card's tool count stays in sync
     } catch (e) {
-      toast.error("Save tool binding failed:" + (e as Error).message);
+      toast.error("Failed to save tool bindings: " + (e as Error).message);
       reload();
       api.tools().then(setTools).catch(() => {});
     }
   }
 
   if (loaded && !detail) {
-    return <div className="text-muted-foreground p-6 text-center text-sm">Agent not found:{agentKey}</div>;
+    return <div className="text-muted-foreground p-6 text-center text-sm">Agent not found: {agentKey}</div>;
   }
   // config is meaningless for the conversational main agent and the fixed-budget
   // goals decomposer; every other agent (workers, custom assistants) honors it.
@@ -260,9 +260,9 @@ export function AgentEditor({ agentKey, onSaved }: { agentKey: string; onSaved?:
   // web search applies to every conversational/executing agent except the one-shot
   // goals decomposer; it's gated by the global master switch.
   const showWebSearch = agentKey !== "goals";
-  // interactive shell (持久 PTY 会话工具族) 同样对除 goals 外的 agent 开放;无全局门控。
+  // interactive shell (persistent PTY session tool family) is likewise open to all agents except goals; no global gate.
   const showInteractiveShell = agentKey !== "goals";
-  // 每个 agent(含 goals/mainagent)都跑在某个 LLM 上,故「默认模型」绑定对所有 agent 开放。
+  // Every agent (including goals/mainagent) runs on some LLM, so the "default model" binding is open to all agents.
   const showLLM = true;
   // triggers (P3) only attach to custom agents.
   const isCustom = !!detail && !detail.agent?.builtin;
@@ -270,38 +270,38 @@ export function AgentEditor({ agentKey, onSaved }: { agentKey: string; onSaved?:
   return (
     <Tabs defaultValue="prompt" className="flex min-h-0 flex-1 flex-col">
       <TabsList className="mx-4 mt-2 w-fit">
-        <TabsTrigger value="prompt">Configuration and prompts</TabsTrigger>
-        <TabsTrigger value="wrapup">Wrap-up prompt</TabsTrigger>
+        <TabsTrigger value="prompt">Config & Prompt</TabsTrigger>
+        <TabsTrigger value="wrapup">Wrap-up Prompt</TabsTrigger>
         <TabsTrigger value="mcp">MCP</TabsTrigger>
         <TabsTrigger value="skill">Skill</TabsTrigger>
         <TabsTrigger value="tools">Tools</TabsTrigger>
-        {isCustom && <TabsTrigger value="triggers">Trigger</TabsTrigger>}
+        {isCustom && <TabsTrigger value="triggers">Triggers</TabsTrigger>}
       </TabsList>
 
-      {/* 配置 + 提示词 */}
+      {/* config + prompt */}
       <TabsContent value="prompt" className="min-h-0 flex-1 overflow-y-auto px-4 pb-4">
         <div className="grid gap-4">
           {(showLLM || showConfig || showWebSearch || showInteractiveShell) && (
             <div className="grid gap-3 rounded-md border p-3">
               {showLLM && (
                 <div className="grid gap-1.5">
-                  <Label htmlFor="llm-profile" className="text-xs">Default Model (LLM Configuration)</Label>
+                  <Label htmlFor="llm-profile" className="text-xs">Default model (LLM profile)</Label>
                   <div className="flex flex-wrap items-center gap-3">
                     <Select value={llmProfileId || "__follow__"} onValueChange={(v) => setLlmProfileId(v === "__follow__" ? "" : v)}>
                       <SelectTrigger id="llm-profile" className="h-8 w-72">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="__follow__">Follow task / global activation configuration</SelectItem>
+                        <SelectItem value="__follow__">Follow task / globally active profile</SelectItem>
                         {llmProfiles.map((p) => (
                           <SelectItem key={p.id} value={String(p.id)}>
-                            {p.name}（{p.model}）{p.is_default ? " • Default" : ""}
+                            {p.name} ({p.model}){p.is_default ? " · default" : ""}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                     <span className="text-muted-foreground max-w-md text-xs">
-                      Ties a fixed LLM configuration for this Agent (effective at point "Save Configuration " ). Priority: Agent binds &amp; gt; tasks/sessions assigns &amp; gt; global activation.
+                      Bind a fixed LLM profile to this Agent (click "Save config" to apply). Priority: Agent binding &gt; task/session override &gt; global active.
                     </span>
                   </div>
                 </div>
@@ -310,19 +310,19 @@ export function AgentEditor({ agentKey, onSaved }: { agentKey: string; onSaved?:
                 {showConfig && (
                   <>
                     <div className="grid gap-1.5">
-                      <Label htmlFor="max-turns" className="text-xs">Maximum number of cycles (0 = open)</Label>
+                      <Label htmlFor="max-turns" className="text-xs">Max loop turns (0 = unlimited)</Label>
                       <Input id="max-turns" type="number" min={0} className="h-8 w-32"
                         value={maxTurns} onChange={(e) => setMaxTurns(e.target.value)} />
                     </div>
                     <div className="grid gap-1.5">
-                      <Label htmlFor="run-seconds" className="text-xs">Run-time (seconds, 0 = unlimited)</Label>
+                      <Label htmlFor="run-seconds" className="text-xs">Run duration (seconds, 0 = unlimited)</Label>
                       <Input id="run-seconds" type="number" min={0} className="h-8 w-32"
                         value={runSecs} onChange={(e) => setRunSecs(e.target.value)} />
                     </div>
                   </>
                 )}
                 <Button size="sm" variant="outline" onClick={saveConfig}>
-                  <SaveIcon /> Save Configuration
+                  <SaveIcon /> Save config
                 </Button>
               </div>
               {showWebSearch && (
@@ -337,8 +337,8 @@ export function AgentEditor({ agentKey, onSaved }: { agentKey: string; onSaved?:
                     <Label htmlFor="web-search" className="text-sm">Web search</Label>
                     <span className="text-muted-foreground text-xs">
                       {webSearchGlobalOn
-                        ? "Upon opening of this Agent (validation effective above point), searchable on web_search"
-                        : "You need to open the network search and configure the backend in the System Configuration before it can be enabled here"}
+                        ? "Once enabled for this Agent (click Save above to apply), web_search can search the internet"
+                        : "Enable web search in System settings and configure a backend before enabling it here"}
                     </span>
                   </div>
                 </div>
@@ -351,9 +351,9 @@ export function AgentEditor({ agentKey, onSaved }: { agentKey: string; onSaved?:
                     onCheckedChange={setInteractiveShell}
                   />
                   <div className="grid gap-0.5">
-                    <Label htmlFor="interactive-shell" className="text-sm">Interactive Shell</Label>
+                    <Label htmlFor="interactive-shell" className="text-sm">Interactive shell</Label>
                     <span className="text-muted-foreground text-xs">
-                      Interactive programs such as msfconsole/ ssh/REPL, which can be driven by a permanent PTY session tool (shell_open/send/read/close/list) when this Agent is opened (effective for saving above point)
+                      Once enabled for this Agent (click Save above to apply), persistent PTY session tools (shell_open/send/read/close/list) can drive interactive programs such as msfconsole/ssh/REPL
                     </span>
                   </div>
                 </div>
@@ -362,7 +362,7 @@ export function AgentEditor({ agentKey, onSaved }: { agentKey: string; onSaved?:
           )}
 
           <div className="grid gap-2">
-            <Label className="text-muted-foreground text-xs">Variable (click to insert placeholder, replace with run-time data when rendering)</Label>
+            <Label className="text-muted-foreground text-xs">Variables (click to insert a placeholder; replaced with runtime data when rendered)</Label>
             <div className="flex flex-wrap gap-2">
               {variables.map((v) => (
                 <Tooltip key={v.name}>
@@ -375,7 +375,7 @@ export function AgentEditor({ agentKey, onSaved }: { agentKey: string; onSaved?:
                   </TooltipTrigger>
                   <TooltipContent className="max-w-xs">
                     <p className="font-medium">{v.description}</p>
-                    <p className="text-muted-foreground mt-1">Example:{v.example}</p>
+                    <p className="text-muted-foreground mt-1">Example: {v.example}</p>
                   </TooltipContent>
                 </Tooltip>
               ))}
@@ -384,19 +384,19 @@ export function AgentEditor({ agentKey, onSaved }: { agentKey: string; onSaved?:
           </div>
 
           <Textarea className="font-mono text-xs" rows={16} value={prompt}
-            placeholder={"Leave blank to use the built-in default prompt"} onChange={(e) => setPrompt(e.target.value)} />
+            placeholder="Leave empty to use the built-in default prompt" onChange={(e) => setPrompt(e.target.value)} />
 
           <div className="flex flex-wrap gap-2">
             <Dialog>
               <DialogTrigger asChild>
                 <Button variant="outline" size="sm" onClick={doPreview}>
-                  <EyeIcon /> Preview render
+                  <EyeIcon /> Render preview
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-2xl">
                 <DialogHeader>
-                  <DialogTitle>Render Preview</DialogTitle>
-                  <DialogDescription>All {`{{.Var}}`} Replaced by an example value from the backend.</DialogDescription>
+                  <DialogTitle>Render preview</DialogTitle>
+                  <DialogDescription>All {`{{.Var}}`} have been replaced by the backend with sample values.</DialogDescription>
                 </DialogHeader>
                 <div className="max-h-[60vh] overflow-auto rounded-md border bg-muted/30 p-3">
                   <Markdown text={preview} />
@@ -404,17 +404,17 @@ export function AgentEditor({ agentKey, onSaved }: { agentKey: string; onSaved?:
               </DialogContent>
             </Dialog>
             <Button size="sm" onClick={savePrompt}>
-              <SaveIcon /> Save as New Version
+              <SaveIcon /> Save as new version
             </Button>
             <Button variant="outline" size="sm" onClick={resetPrompt}>
-              <RotateCcwIcon /> Reset to defaults
+              <RotateCcwIcon /> Restore default
             </Button>
           </div>
 
 
           <Separator />
           <div className="grid gap-2">
-            <Label className="text-muted-foreground text-xs">Version History</Label>
+            <Label className="text-muted-foreground text-xs">Version history</Label>
             <ul className="grid gap-1">
               {versions.map((ver, i) => (
                 <li key={ver.version} className="flex items-center gap-2 rounded-md px-1 py-0.5 text-xs hover:bg-muted/50">
@@ -437,12 +437,12 @@ export function AgentEditor({ agentKey, onSaved }: { agentKey: string; onSaved?:
                 </li>
               ))}
               {versions.length === 0 && (
-                <li className="text-muted-foreground text-xs">(Unsaved version, with built-in default)</li>
+                <li className="text-muted-foreground text-xs">(no saved versions; using the built-in default)</li>
               )}
             </ul>
           </div>
 
-          {/* 查看版本 dialog */}
+          {/* view-version dialog */}
           <Dialog open={!!viewVer} onOpenChange={(o) => { if (!o) setViewVer(null); }}>
             <DialogContent className="sm:max-w-2xl">
               <DialogHeader>
@@ -469,27 +469,27 @@ export function AgentEditor({ agentKey, onSaved }: { agentKey: string; onSaved?:
                   <Button variant="outline" size="sm" onClick={() => {
                     if (viewVer) { setDiffVer(viewVer); setViewVer(null); }
                   }}>
-                    <GitCompareIcon className="mr-1 size-3.5" /> Compare with current version
+                    <GitCompareIcon className="mr-1 size-3.5" /> Compare with current
                   </Button>
                 )}
                 <Button size="sm" onClick={() => {
-                  if (viewVer) { setPrompt(viewVer.template_text); setViewVer(null); toast.success(`Loaded v${viewVer.version} Go to the editor and confirm later point "Saving as a new version"`); }
+                  if (viewVer) { setPrompt(viewVer.template_text); setViewVer(null); toast.success(`Loaded v${viewVer.version} into the editor; click "Save as new version" to confirm`); }
                 }}>
-                  Load to Editor
+                  Load into editor
                 </Button>
               </div>
             </DialogContent>
           </Dialog>
 
-          {/* 版本对比 dialog */}
+          {/* version-diff dialog */}
           <Dialog open={!!diffVer} onOpenChange={(o) => { if (!o) setDiffVer(null); }}>
             <DialogContent className="sm:max-w-3xl">
               <DialogHeader>
-                <DialogTitle>Version comparison: v{diffVer?.version} → v{versions[0]?.version}(Current)</DialogTitle>
+                <DialogTitle>Version diff: v{diffVer?.version} → v{versions[0]?.version} (current)</DialogTitle>
                 <DialogDescription>
                   <span className="inline-flex items-center gap-3 text-xs">
-                    <span className="rounded bg-red-500/15 px-1.5 py-0.5 text-red-600 dark:text-red-400">- Delete.</span>
-                    <span className="rounded bg-green-500/15 px-1.5 py-0.5 text-green-600 dark:text-green-400">+ Add</span>
+                    <span className="rounded bg-red-500/15 px-1.5 py-0.5 text-red-600 dark:text-red-400">- removed</span>
+                    <span className="rounded bg-green-500/15 px-1.5 py-0.5 text-green-600 dark:text-green-400">+ added</span>
                   </span>
                 </DialogDescription>
               </DialogHeader>
@@ -499,44 +499,44 @@ export function AgentEditor({ agentKey, onSaved }: { agentKey: string; onSaved?:
         </div>
       </TabsContent>
 
-      {/* 收尾提示词 */}
+      {/* wrap-up prompt */}
       <TabsContent value="wrapup" className="min-h-0 flex-1 overflow-y-auto px-4 pb-4">
         <div className="grid gap-3">
           <p className="text-muted-foreground text-xs leading-relaxed">
-            When this agent reaches<b>Timeout</b>or<b>the step limit</b>When terminated, the system injects this "end-of-the-art" round to the end:
-            Write back what has been identified but is not in the library, and then output a summary (to avoid scrambling). Leave empty, use the built-in default.
+            When this Agent is terminated due to <b>timeout</b> or <b>exhausted turns</b>, the system injects this "wrap-up prompt" for one wrap-up round:
+            It first writes back anything identified but not yet stored, then outputs a one-line summary (to avoid an abrupt ending). Leave empty to use the built-in default.
           </p>
           <div className="flex items-center gap-2">
-            <Label className="text-xs">Wrap-up prompt text</Label>
+            <Label className="text-xs">Wrap-up prompt body</Label>
             {wrapup.trim() ? (
               <Badge variant="secondary" className="px-1.5 py-0">Custom</Badge>
             ) : (
-              <Badge variant="outline" className="px-1.5 py-0">Use built-in default</Badge>
+              <Badge variant="outline" className="px-1.5 py-0">Using built-in default</Badge>
             )}
           </div>
           <Textarea
             className="font-mono text-xs"
             rows={10}
             value={wrapup}
-            placeholder={wrapupDefault || "Leave empty and use the built-in default end-of-pipe hint"}
+            placeholder={wrapupDefault || "Leave empty to use the built-in default wrap-up prompt"}
             onChange={(e) => setWrapup(e.target.value)}
           />
           <div className="grid gap-1.5">
             <Label htmlFor="wrapup-turns" className="text-xs">
-              Number of tailing wheels (up to a few rounds at the end stage; 0 = built-in default) {wrapupTurnsDefault} turns)
+              Wrap-up turns (max turns for the wrap-up phase itself; 0 = built-in default of {wrapupTurnsDefault} turns)
             </Label>
             <Input id="wrapup-turns" type="number" min={0} className="h-8 w-32"
               value={wrapupTurns} onChange={(e) => setWrapupTurns(e.target.value)} />
           </div>
           <div className="flex gap-2">
             <Button size="sm" onClick={saveWrapup}>Save</Button>
-            <Button size="sm" variant="outline" onClick={resetWrapup}>Reset to defaults</Button>
+            <Button size="sm" variant="outline" onClick={resetWrapup}>Restore default</Button>
           </div>
           {wrapupDefault && (
             <>
               <Separator />
               <div className="grid gap-1.5">
-                <Label className="text-muted-foreground text-xs">Internal Default (read-only, for information)</Label>
+                <Label className="text-muted-foreground text-xs">Built-in default (read-only, for reference)</Label>
                 <pre className="text-muted-foreground max-h-40 overflow-y-auto rounded-md border bg-muted/30 p-2 text-xs whitespace-pre-wrap">
                   {wrapupDefault}
                 </pre>
@@ -548,38 +548,38 @@ export function AgentEditor({ agentKey, onSaved }: { agentKey: string; onSaved?:
             <>
               <Separator className="my-2" />
               <p className="text-muted-foreground text-xs leading-relaxed">
-                <b>Task timeout wrap-up</b>(with per-run on top)<b>Two sets.</b>: When<b>The whole job.</b>Overtime cap reached, and injections were nearing completion.
-                Contrary to per-run semantics (e. g. planner: per-run says "Don't stop planning" and the task goes beyond "stop at point and make the final decision". Leave the space with the built-in default.
+                <b>Task timeout wrap-up</b> (<b>separate</b> from the per-run wrap-up above): injected when the <b>entire task</b> hits its timeout cap and is about to end.
+                Its semantics are often the opposite of per-run (e.g. planner: per-run says "don't stop, keep planning", task timeout says "time's up, stop and make the final call"). Leave empty to use the built-in default.
               </p>
               <div className="flex items-center gap-2">
-                <Label className="text-xs">Task timeout wrap-up prompt</Label>
+                <Label className="text-xs">Task timeout wrap-up prompt body</Label>
                 {ttWrapup.trim() ? (
                   <Badge variant="secondary" className="px-1.5 py-0">Custom</Badge>
                 ) : (
-                  <Badge variant="outline" className="px-1.5 py-0">Use built-in default</Badge>
+                  <Badge variant="outline" className="px-1.5 py-0">Using built-in default</Badge>
                 )}
               </div>
               <Textarea
                 className="font-mono text-xs"
                 rows={10}
                 value={ttWrapup}
-                placeholder={ttWrapupDefault || "Leave empty and use an internal default end-of-time reminder"}
+                placeholder={ttWrapupDefault || "Leave empty to use the built-in default task timeout wrap-up prompt"}
                 onChange={(e) => setTtWrapup(e.target.value)}
               />
               <div className="grid gap-1.5">
                 <Label htmlFor="tt-turns" className="text-xs">
-                  Wrap-up turns (0 = built-in default {ttTurnsDefault} turns)
+                  Wrap-up turns (0 = built-in default of {ttTurnsDefault} turns)
                 </Label>
                 <Input id="tt-turns" type="number" min={0} className="h-8 w-32"
                   value={ttTurns} onChange={(e) => setTtTurns(e.target.value)} />
               </div>
               <div className="flex gap-2">
                 <Button size="sm" onClick={saveTaskTimeoutWrapup}>Save</Button>
-                <Button size="sm" variant="outline" onClick={resetTaskTimeoutWrapup}>Reset to defaults</Button>
+                <Button size="sm" variant="outline" onClick={resetTaskTimeoutWrapup}>Restore default</Button>
               </div>
               {ttWrapupDefault && (
                 <div className="grid gap-1.5">
-                  <Label className="text-muted-foreground text-xs">Internal Default (read-only, for information)</Label>
+                  <Label className="text-muted-foreground text-xs">Built-in default (read-only, for reference)</Label>
                   <pre className="text-muted-foreground max-h-40 overflow-y-auto rounded-md border bg-muted/30 p-2 text-xs whitespace-pre-wrap">
                     {ttWrapupDefault}
                   </pre>
@@ -590,9 +590,9 @@ export function AgentEditor({ agentKey, onSaved }: { agentKey: string; onSaved?:
         </div>
       </TabsContent>
 
-      {/* MCP 可见性 */}
+      {/* MCP visibility */}
       <TabsContent value="mcp" className="min-h-0 flex-1 overflow-y-auto px-4 pb-4">
-        <p className="text-muted-foreground mb-3 text-xs">Check this MCP server that Agent can see.</p>
+        <p className="text-muted-foreground mb-3 text-xs">Check the MCP servers visible to this Agent.</p>
         <div className="grid gap-2">
           {mcp.map((m) => (
             <label key={m.id} className="flex items-center gap-2 rounded-md border p-2 text-sm">
@@ -601,13 +601,13 @@ export function AgentEditor({ agentKey, onSaved }: { agentKey: string; onSaved?:
               <span className="text-muted-foreground ml-auto text-xs">{m.transport}</span>
             </label>
           ))}
-          {mcp.length === 0 && <span className="text-muted-foreground text-xs">(No MCP servers)</span>}
+          {mcp.length === 0 && <span className="text-muted-foreground text-xs">(no MCP servers)</span>}
         </div>
       </TabsContent>
 
-      {/* Skill 可见性 */}
+      {/* Skill visibility */}
       <TabsContent value="skill" className="min-h-0 flex-1 overflow-y-auto px-4 pb-4">
-        <p className="text-muted-foreground mb-3 text-xs">Check out this Agent visible Skill.</p>
+        <p className="text-muted-foreground mb-3 text-xs">Check the Skills visible to this Agent.</p>
         <div className="grid gap-2">
           {skills.map((s) => (
             <label key={s.name} className="flex items-center gap-2 rounded-md border p-2 text-sm">
@@ -616,17 +616,17 @@ export function AgentEditor({ agentKey, onSaved }: { agentKey: string; onSaved?:
               {s.description && <span className="text-muted-foreground ml-auto truncate text-xs">{s.description}</span>}
             </label>
           ))}
-          {skills.length === 0 && <span className="text-muted-foreground text-xs">(No skills)</span>}
+          {skills.length === 0 && <span className="text-muted-foreground text-xs">(no Skills)</span>}
         </div>
       </TabsContent>
 
-      {/* Tools 绑定 */}
+      {/* Tools bindings */}
       <TabsContent value="tools" className="min-h-0 flex-1 overflow-y-auto px-4 pb-4">
-        <p className="text-muted-foreground mb-3 text-xs">Check the built-in tool to bind to this Agent.</p>
+        <p className="text-muted-foreground mb-3 text-xs">Check the built-in tools bound to this Agent.</p>
         <div className="grid gap-2">
           {tools.map((t) => {
             const isTraffic = TRAFFIC_TOOL_KEYS.has(t.key);
-            const gated = isTraffic && !captureOn; // traffic tools need 流量捕获 on
+            const gated = isTraffic && !captureOn; // traffic tools need traffic capture on
             return (
               <label
                 key={t.key}
@@ -659,11 +659,11 @@ export function AgentEditor({ agentKey, onSaved }: { agentKey: string; onSaved?:
               </label>
             );
           })}
-          {tools.length === 0 && <span className="text-muted-foreground text-xs">(No tools available)</span>}
+          {tools.length === 0 && <span className="text-muted-foreground text-xs">(no tools)</span>}
         </div>
       </TabsContent>
 
-      {/* 触发(P3, 仅自定义 agent) */}
+      {/* Triggers (P3, custom agents only) */}
       {isCustom && (
         <TabsContent value="triggers" className="min-h-0 flex-1 overflow-y-auto px-4 pb-4">
           <AgentTriggersTab agentKey={agentKey} agent={detail?.agent} />
@@ -728,12 +728,12 @@ function DiffView({ oldText, newText }: { oldText: string; newText: string }) {
 }
 
 // AgentTriggersTab manages a custom agent's P3 triggers: list + add + delete.
-// Each trigger fires (定时/发现finding/目标达成/任务超时/工具调用，可多选) → a new conversation runs
+// Each trigger fires (schedule/finding found/goal met/task timeout/tool call, multi-select) → a new conversation runs
 // in parallel with the base user message + auto context appended by the backend.
 function AgentTriggersTab({ agentKey, agent }: { agentKey: string; agent?: Agent }) {
   const [triggers, setTriggers] = React.useState<AgentTrigger[]>([]);
   const [tools, setTools] = React.useState<Tool[]>([]);
-  // 触发后处理策略(每 agent);初值来自 agent detail,改动即保存。
+  // post-trigger handling policy (per agent); initial value comes from agent detail, saved on change.
   const [runMode, setRunMode] = React.useState<"serial" | "parallel">(agent?.trigger_run_mode ?? "serial");
   const [mergeMode, setMergeMode] = React.useState<"by_task" | "all" | "none">(agent?.trigger_merge_mode ?? "all");
   const [maxParallel, setMaxParallel] = React.useState(String(agent?.trigger_max_parallel ?? 5));
@@ -751,7 +751,7 @@ function AgentTriggersTab({ agentKey, agent }: { agentKey: string; agent?: Agent
     try {
       await api.saveAgentConfig(agentKey, patch);
     } catch (e) {
-      toast.error("Save policy failed:" + (e as Error).message);
+      toast.error("Failed to save policy: " + (e as Error).message);
     }
   }
   const [onInterval, setOnInterval] = React.useState(false);
@@ -769,7 +769,7 @@ function AgentTriggersTab({ agentKey, agent }: { agentKey: string; agent?: Agent
   const [taskCreateMsg, setTaskCreateMsg] = React.useState("");
   const [toolNames, setToolNames] = React.useState<string[]>([]);
   const [saving, setSaving] = React.useState(false);
-  // null = 新增模式；非 null = 正在编辑该 id 的触发器。
+  // null = create mode; non-null = editing the trigger with that id.
   const [editingId, setEditingId] = React.useState<number | null>(null);
 
   const reload = React.useCallback(() => {
@@ -786,7 +786,7 @@ function AgentTriggersTab({ agentKey, agent }: { agentKey: string; agent?: Agent
     setToolNames((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
   }
 
-  // resetForm 清空表单并回到「新增」模式。
+  // resetForm clears the form and returns to "create" mode.
   function resetForm() {
     setEditingId(null);
     setOnInterval(false);
@@ -805,7 +805,7 @@ function AgentTriggersTab({ agentKey, agent }: { agentKey: string; agent?: Agent
     setToolNames([]);
   }
 
-  // startEdit 把某条已有触发器灌进表单,进入「编辑」模式。
+  // startEdit fills the form with an existing trigger and enters "edit" mode.
   function startEdit(t: AgentTrigger) {
     setEditingId(t.id);
     setOnInterval(t.interval_sec > 0);
@@ -824,15 +824,15 @@ function AgentTriggersTab({ agentKey, agent }: { agentKey: string; agent?: Agent
     setToolNames(t.tool_names ?? []);
   }
 
-  // submit 依 editingId 走「新增」或「保存修改」;编辑时保留该触发器的启用状态。
+  // submit creates or saves changes based on editingId; editing keeps the trigger's enabled state.
   async function submit() {
     const n = onInterval ? Math.max(1, Math.floor(Number(intervalSec) || 0)) : 0;
     if (n === 0 && !onFinding && !onGoalMet && !onTaskTimeout && !onToolCall && !onTaskCreate) {
-      toast.error("Select at least one of the trigger conditions");
+      toast.error("Select at least one trigger condition");
       return;
     }
     if (onToolCall && toolNames.length === 0) {
-      toast.error("Tool call trigger selects at least one tool");
+      toast.error("Tool-call triggers require at least one tool");
       return;
     }
     const body = {
@@ -855,15 +855,15 @@ function AgentTriggersTab({ agentKey, agent }: { agentKey: string; agent?: Agent
       if (editingId != null) {
         const cur = triggers.find((x) => x.id === editingId);
         await api.updateTrigger(editingId, { ...body, enabled: cur?.enabled ?? true });
-        toast.success("Saved Changes");
+        toast.success("Changes saved");
       } else {
         await api.createTrigger(agentKey, { ...body, enabled: true });
-        toast.success("Added Trigger");
+        toast.success("Trigger added");
       }
       resetForm();
       reload();
     } catch (e) {
-      toast.error((editingId != null ? "Failed to save:" : "Failed to add:") + (e as Error).message);
+      toast.error((editingId != null ? "Save failed: " : "Add failed: ") + (e as Error).message);
     } finally {
       setSaving(false);
     }
@@ -888,7 +888,7 @@ function AgentTriggersTab({ agentKey, agent }: { agentKey: string; agent?: Agent
       });
       reload();
     } catch (e) {
-      toast.error("Failed to save:" + (e as Error).message);
+      toast.error("Save failed: " + (e as Error).message);
     }
   }
   async function del(id: number) {
@@ -897,34 +897,34 @@ function AgentTriggersTab({ agentKey, agent }: { agentKey: string; agent?: Agent
       if (editingId === id) resetForm();
       reload();
     } catch (e) {
-      toast.error("Failed to delete:" + (e as Error).message);
+      toast.error("Delete failed: " + (e as Error).message);
     }
   }
 
   function condLabel(t: AgentTrigger): string {
     const parts: string[] = [];
-    if (t.interval_sec > 0) parts.push(`Every ${t.interval_sec}s`);
-    if (t.on_finding) parts.push("Finding discovered");
-    if (t.on_goal_met) parts.push("Goal achieved");
-    if (t.on_task_timeout) parts.push("Task timeout");
-    if (t.on_tool_call) parts.push(`Tool Call(s)${t.tool_names.length})`);
-    if (t.on_task_create) parts.push("Task creation");
-    return parts.join(" · ") || "(Unconditional)";
+    if (t.interval_sec > 0) parts.push(`every ${t.interval_sec}s`);
+    if (t.on_finding) parts.push("finding found");
+    if (t.on_goal_met) parts.push("goal met");
+    if (t.on_task_timeout) parts.push("task timeout");
+    if (t.on_tool_call) parts.push(`tool call (${t.tool_names.length})`);
+    if (t.on_task_create) parts.push("task created");
+    return parts.join(" · ") || "(no conditions)";
   }
 
   return (
     <div className="grid gap-4">
       <p className="text-muted-foreground text-xs">
-        Trigger allows this custom Agent to run automatically: every trigger<b>Run in a new session</b>(visible on the Conversations page).
-        Select multiple trigger conditions; the system automatically attaches "why this time trigger + associated task/finding/target" to the base message you write.
+        Triggers make this custom Agent run automatically: each trigger <b>starts a new conversation</b> (visible on the Chat page).
+        Multiple trigger conditions can be selected; the system automatically appends "why this fired + related task/finding/goal" to the base message you write.
       </p>
 
-      {/* 触发后处理策略 */}
+      {/* post-trigger handling policy */}
       <div className="grid gap-3 rounded-md border p-3">
-        <Label className="text-muted-foreground text-xs">Trigger post-treatment policy (deciding how to trigger queuing/merger)</Label>
+        <Label className="text-muted-foreground text-xs">Post-trigger handling policy (how triggers are queued/merged to run)</Label>
         <div className="flex flex-wrap items-center gap-4">
           <div className="grid gap-1">
-            <Label className="text-xs">Run Mode</Label>
+            <Label className="text-xs">Run mode</Label>
             <Select
               value={runMode}
               onValueChange={(v) => {
@@ -938,13 +938,13 @@ function AgentTriggersTab({ agentKey, agent }: { agentKey: string; agent?: Agent
               </SelectTrigger>
               <SelectContent position="popper">
                 <SelectItem value="serial">Serial (queued, one at a time)</SelectItem>
-                <SelectItem value="parallel">Parallel (separate sessions)</SelectItem>
+                <SelectItem value="parallel">Parallel (independent concurrent sessions)</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div className="grid gap-1">
-            <Label className="text-xs">Merge Mode</Label>
+            <Label className="text-xs">Merge mode</Label>
             <Select
               value={mergeMode}
               disabled={runMode === "parallel"}
@@ -958,16 +958,16 @@ function AgentTriggersTab({ agentKey, agent }: { agentKey: string; agent?: Agent
                 <SelectValue />
               </SelectTrigger>
               <SelectContent position="popper">
-                <SelectItem value="by_task">Merge by Task</SelectItem>
-                <SelectItem value="all">Merge them all into one.</SelectItem>
-                <SelectItem value="none">Do Not Merge</SelectItem>
+                <SelectItem value="by_task">Merge by task</SelectItem>
+                <SelectItem value="all">Merge all into one</SelectItem>
+                <SelectItem value="none">No merge</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           {runMode === "parallel" && (
             <div className="grid gap-1">
-              <Label htmlFor="tr-maxpar" className="text-xs">Maximum concurrency (0 = unlimited)</Label>
+              <Label htmlFor="tr-maxpar" className="text-xs">Max concurrency (0 = unlimited)</Label>
               <Input
                 id="tr-maxpar"
                 type="number"
@@ -986,24 +986,24 @@ function AgentTriggersTab({ agentKey, agent }: { agentKey: string; agent?: Agent
         </div>
         <p className="text-muted-foreground text-xs">
           {runMode === "parallel"
-            ? "Parallel: each trigger starts with a session and starts without merging; above the maximum combined trigger queue, etc."
+            ? "Parallel: each trigger immediately starts its own concurrent session, no merging; triggers beyond the max concurrency queue for a free slot."
             : mergeMode === "by_task"
-              ? "Serial — Task-based merging: one run with angent; event in line for the same task triggers a session."
+              ? "Serial · merge by task: one run at a time per agent; queued events for the same task merge into one conversation."
               : mergeMode === "all"
-                ? "Serial — All combined: run one at a time with angent; merge all triggers of the current queue into one session when you are drawn in line."
-                : "Serials. Do not merge: run one at a time with angent; each triggers one session."}
+                ? "Serial · merge all: one run at a time per agent; when dequeuing, all currently queued triggers merge into one conversation."
+                : "Serial · no merge: one run at a time per agent; each trigger gets its own conversation."}
         </p>
       </div>
 
-      {/* 新增 / 编辑触发器 */}
+      {/* create / edit trigger */}
       <div className="grid gap-3 rounded-md border p-3">
         <Label className="text-muted-foreground text-xs">
           {editingId != null
-            ? `Edit Trigger#${editingId}(Modified point "Save Changes")`
-            : "Add a trigger (each condition can be filled with the respective user message)"}
+            ? `Edit trigger #${editingId} (click "Save changes" when done)`
+            : "New trigger (each condition can have its own user message)"}
         </Label>
 
-        {/* 定时 */}
+        {/* schedule */}
         <div className="grid gap-1.5">
           <label className="flex items-center gap-2 text-sm">
             <Checkbox checked={onInterval} onCheckedChange={(v) => setOnInterval(!!v)} /> Scheduled trigger
@@ -1014,10 +1014,10 @@ function AgentTriggersTab({ agentKey, agent }: { agentKey: string; agent?: Agent
                 <Label htmlFor="tr-interval" className="text-xs">Every</Label>
                 <Input id="tr-interval" type="number" min={1} className="h-8 w-24"
                   value={intervalSec} onChange={(e) => setIntervalSec(e.target.value)} />
-                <span className="text-muted-foreground text-xs">sec</span>
+                <span className="text-muted-foreground text-xs">seconds</span>
               </div>
               <Textarea className="text-xs" rows={2} value={intervalMsg}
-                placeholder={"If sent to angent on a time-trigger, e. g. check all tasks"} onChange={(e) => setIntervalMsg(e.target.value)} />
+                placeholder="Message sent to the agent when the schedule fires, e.g. inspect all tasks" onChange={(e) => setIntervalMsg(e.target.value)} />
             </div>
           )}
         </div>
@@ -1025,48 +1025,48 @@ function AgentTriggersTab({ agentKey, agent }: { agentKey: string; agent?: Agent
         {/* finding */}
         <div className="grid gap-1.5">
           <label className="flex items-center gap-2 text-sm">
-            <Checkbox checked={onFinding} onCheckedChange={(v) => setOnFinding(!!v)} /> Trigger when finding finding
+            <Checkbox checked={onFinding} onCheckedChange={(v) => setOnFinding(!!v)} /> Trigger on finding
           </label>
           {onFinding && (
             <Textarea className="text-xs" rows={2} value={findingMsg}
-              placeholder={"If you find finding when sending to angent (system with tasks and finding details)"} onChange={(e) => setFindingMsg(e.target.value)} />
+              placeholder="Message sent to the agent when a finding is found (the system attaches task and finding details)" onChange={(e) => setFindingMsg(e.target.value)} />
           )}
         </div>
 
-        {/* 目标达成 */}
+        {/* goal met */}
         <div className="grid gap-1.5">
           <label className="flex items-center gap-2 text-sm">
-            <Checkbox checked={onGoalMet} onCheckedChange={(v) => setOnGoalMet(!!v)} /> Trigger on target.
+            <Checkbox checked={onGoalMet} onCheckedChange={(v) => setOnGoalMet(!!v)} /> Trigger on goal met
           </label>
           {onGoalMet && (
             <Textarea className="text-xs" rows={2} value={goalMsg}
-              placeholder={"When a target is reached, send it to angent. (Systems will have tasks and goals.)"} onChange={(e) => setGoalMsg(e.target.value)} />
+              placeholder="Message sent to the agent when a goal is met (the system attaches the task and the met goal)" onChange={(e) => setGoalMsg(e.target.value)} />
           )}
         </div>
 
-        {/* 任务超时 */}
+        {/* task timeout */}
         <div className="grid gap-1.5">
           <label className="flex items-center gap-2 text-sm">
-            <Checkbox checked={onTaskTimeout} onCheckedChange={(v) => setOnTaskTimeout(!!v)} /> Task timeout trigger
+            <Checkbox checked={onTaskTimeout} onCheckedChange={(v) => setOnTaskTimeout(!!v)} /> Trigger on task timeout
           </label>
           {onTaskTimeout && (
             <Textarea className="text-xs" rows={2} value={taskTimeoutMsg}
-              placeholder={"If the task is timed out to angent (system will have a task number and target)"} onChange={(e) => setTaskTimeoutMsg(e.target.value)} />
+              placeholder="Message sent to the agent on task timeout (the system attaches the task id and goals)" onChange={(e) => setTaskTimeoutMsg(e.target.value)} />
           )}
         </div>
 
-        {/* 工具调用 */}
+        {/* tool call */}
         <div className="grid gap-1.5">
           <label className="flex items-center gap-2 text-sm">
-            <Checkbox checked={onToolCall} onCheckedChange={(v) => setOnToolCall(!!v)} /> Trigger when tools are called
+            <Checkbox checked={onToolCall} onCheckedChange={(v) => setOnToolCall(!!v)} /> Trigger on tool call
           </label>
           {onToolCall && (
             <div className="grid gap-1.5">
               <div className="text-muted-foreground text-xs">
-                Select the tools to monitor (at least one); each time these tools are in the process of task execution<b>Call complete.</b>. Selected {toolNames.length} A few.
+                Select the tools to watch (at least one); each time these tools finish a <b>call</b> during task execution, a trigger fires. {toolNames.length} selected.
               </div>
               <div className="max-h-40 overflow-y-auto rounded-md border p-2">
-                {tools.length === 0 && <span className="text-muted-foreground text-xs">(Tool List is empty)</span>}
+                {tools.length === 0 && <span className="text-muted-foreground text-xs">(tool list is empty)</span>}
                 <div className="grid gap-1">
                   {tools.map((tool) => (
                     <label key={tool.key} className="flex items-start gap-2 text-xs">
@@ -1081,38 +1081,38 @@ function AgentTriggersTab({ agentKey, agent }: { agentKey: string; agent?: Agent
                 </div>
               </div>
               <Textarea className="text-xs" rows={2} value={toolCallMsg}
-                placeholder={"When the tool is called to angent (system with task information, tool into participating content)"} onChange={(e) => setToolCallMsg(e.target.value)} />
+                placeholder="Message sent to the agent when a tool is called (the system attaches task info, tool input and output)" onChange={(e) => setToolCallMsg(e.target.value)} />
             </div>
           )}
         </div>
 
-        {/* 任务创建 */}
+        {/* task created */}
         <div className="grid gap-1.5">
           <label className="flex items-center gap-2 text-sm">
-            <Checkbox checked={onTaskCreate} onCheckedChange={(v) => setOnTaskCreate(!!v)} /> Trigger on job creation
+            <Checkbox checked={onTaskCreate} onCheckedChange={(v) => setOnTaskCreate(!!v)} /> Trigger on task created
           </label>
           {onTaskCreate && (
             <Textarea className="text-xs" rows={2} value={taskCreateMsg}
-              placeholder={"If the task is sent to angent when created (the system will have a task number and a target)"} onChange={(e) => setTaskCreateMsg(e.target.value)} />
+              placeholder="Message sent to the agent when a task is created (the system attaches the task id and goals)" onChange={(e) => setTaskCreateMsg(e.target.value)} />
           )}
         </div>
 
         <div className="flex items-center gap-2">
           <Button size="sm" onClick={submit} disabled={saving}>
-            <SaveIcon /> {editingId != null ? "Save changes" : "Add Trigger"}
+            <SaveIcon /> {editingId != null ? "Save changes" : "Add trigger"}
           </Button>
           {editingId != null && (
             <Button size="sm" variant="ghost" onClick={resetForm} disabled={saving}>
-              <XIcon /> Cancel editing
+              <XIcon /> Cancel edit
             </Button>
           )}
         </div>
       </div>
 
-      {/* 已有触发器 */}
+      {/* existing triggers */}
       <div className="grid gap-2">
         <Label className="text-muted-foreground text-xs">Existing triggers</Label>
-        {triggers.length === 0 && <span className="text-muted-foreground text-xs">(not available)</span>}
+        {triggers.length === 0 && <span className="text-muted-foreground text-xs">(none)</span>}
         {triggers.map((t) => (
           <div
             key={t.id}
@@ -1130,25 +1130,25 @@ function AgentTriggersTab({ agentKey, agent }: { agentKey: string; agent?: Agent
                 )}
               </div>
               <div className="text-muted-foreground grid gap-0.5 text-xs">
-                {t.interval_sec > 0 && t.interval_message && <div className="line-clamp-1">Time:{t.interval_message}</div>}
-                {t.on_finding && t.finding_message && <div className="line-clamp-1">finding：{t.finding_message}</div>}
-                {t.on_goal_met && t.goal_message && <div className="line-clamp-1">Objectives:{t.goal_message}</div>}
-                {t.on_task_timeout && t.task_timeout_message && <div className="line-clamp-1">Timeout:{t.task_timeout_message}</div>}
-                {t.on_task_create && t.task_create_message && <div className="line-clamp-1">Task created:{t.task_create_message}</div>}
+                {t.interval_sec > 0 && t.interval_message && <div className="line-clamp-1">Schedule: {t.interval_message}</div>}
+                {t.on_finding && t.finding_message && <div className="line-clamp-1">Finding: {t.finding_message}</div>}
+                {t.on_goal_met && t.goal_message && <div className="line-clamp-1">Goal: {t.goal_message}</div>}
+                {t.on_task_timeout && t.task_timeout_message && <div className="line-clamp-1">Timeout: {t.task_timeout_message}</div>}
+                {t.on_task_create && t.task_create_message && <div className="line-clamp-1">Task created: {t.task_create_message}</div>}
                 {t.on_tool_call && (
                   <>
-                    <div className="line-clamp-1">Tools:{t.tool_names.join("、") || "(unselected)"}</div>
-                    {t.tool_call_message && <div className="line-clamp-1">Message:{t.tool_call_message}</div>}
+                    <div className="line-clamp-1">Tools: {t.tool_names.join(", ") || "(none selected)"}</div>
+                    {t.tool_call_message && <div className="line-clamp-1">Message: {t.tool_call_message}</div>}
                   </>
                 )}
               </div>
             </div>
             <Button variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-foreground"
-              onClick={() => startEdit(t)} title={"Edit"}>
+              onClick={() => startEdit(t)} title="Edit">
               <PencilIcon className="size-3.5" />
             </Button>
             <Button variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-destructive"
-              onClick={() => del(t.id)} title={"Delete"}>
+              onClick={() => del(t.id)} title="Delete">
               <Trash2Icon className="size-3.5" />
             </Button>
           </div>

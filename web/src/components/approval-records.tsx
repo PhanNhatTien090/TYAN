@@ -50,18 +50,18 @@ function fmtTime(value?: string) {
 function source(row: InterceptApprovalRow) {
   if (row.decision_source) return row.decision_source;
   if (row.rule_id) return "rule";
-  return row.reason?.startsWith("[模型]") ? "model" : "unknown";
+  return row.reason?.startsWith("[model]") ? "model" : "unknown";
 }
 
 function originLabel(row: InterceptApprovalRow) {
   if (row.task_id) return row.task_id;
-  if (row.conversation_id) return `Dialogue#${row.conversation_id}`;
+  if (row.conversation_id) return `Conversation #${row.conversation_id}`;
   return "—";
 }
 
 function ApprovalOrigin({ row, detail = false }: { row: InterceptApprovalRow; detail?: boolean }) {
   const [locating, setLocating] = React.useState(false);
-  const label = detail && row.task_id ? `Tasks ${row.task_id}` : originLabel(row);
+  const label = detail && row.task_id ? `Task ${row.task_id}` : originLabel(row);
   const query = new URLSearchParams({ approval: String(row.id) });
   let href: string | undefined;
   if (row.conversation_id) {
@@ -75,7 +75,7 @@ function ApprovalOrigin({ row, detail = false }: { row: InterceptApprovalRow; de
     <a
       href={href}
       className="text-primary underline-offset-4 hover:underline"
-      aria-label={`Position approval#${row.id} Source:${label}`}
+      aria-label={`Locate the source of approval #${row.id}: ${label}`}
       aria-busy={locating}
       onClick={async (e) => {
         e.stopPropagation();
@@ -87,7 +87,7 @@ function ApprovalOrigin({ row, detail = false }: { row: InterceptApprovalRow; de
           await api.interceptExecution(row.id, row.conversation_id ?? undefined);
           window.location.assign(href);
         } catch (error) {
-          toast.error((error as Error).message || "Unable to locate counterpart execution");
+          toast.error((error as Error).message || "Unable to locate the corresponding execution");
           setLocating(false);
         }
       }}
@@ -109,20 +109,20 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 function MatchCell({ row, showReason = true }: { row: InterceptApprovalRow; showReason?: boolean }) {
-  const reason = row.reason?.replace(/^\[模型\]\s*/, "");
+  const reason = row.reason?.replace(/^\[model\]\s*/, "");
   return (
     <div className="flex min-w-0 flex-col gap-1">
       {source(row) === "model" ? (
         <Badge variant="outline">
           <BotIcon />
-          Model determination
+          Model decision
         </Badge>
       ) : (
-        <span className="truncate">{row.rule_name || "Rules not recorded or deleted"}</span>
+        <span className="truncate">{row.rule_name || "Rule not recorded or deleted"}</span>
       )}
       {showReason ? (
         <p className="truncate text-muted-foreground text-xs" title={reason}>
-          {reason || "Reasons not recorded"}
+          {reason || "No reason recorded"}
         </p>
       ) : null}
     </div>
@@ -135,7 +135,7 @@ function CodeBlock({ label, text, truncated = false }: { label: string; text: st
       await navigator.clipboard.writeText(text);
       toast.success("Copied");
     } catch {
-      toast.error("Copying failed, select the contents manually");
+      toast.error("Copy failed; select the content manually to copy");
     }
   }
   return (
@@ -143,7 +143,7 @@ function CodeBlock({ label, text, truncated = false }: { label: string; text: st
       <div className="flex items-center justify-between gap-2">
         <h3 className="font-medium text-muted-foreground text-xs">{label}</h3>
         {text ? (
-          <Button variant="ghost" size="icon-xs" aria-label={`Copy${label}`} onClick={() => void copy()}>
+          <Button variant="ghost" size="icon-xs" aria-label={`Copy ${label}`} onClick={() => void copy()}>
             <CopyIcon />
           </Button>
         ) : null}
@@ -151,98 +151,98 @@ function CodeBlock({ label, text, truncated = false }: { label: string; text: st
       <pre className="max-h-80 min-w-0 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-muted/60 p-3 font-mono text-xs leading-6 [overflow-wrap:anywhere]">
         {text || "Not recorded"}
       </pre>
-      {truncated ? <p className="text-muted-foreground text-xs">The contents have been cut and above are saved clips.</p> : null}
+      {truncated ? <p className="text-muted-foreground text-xs">Content truncated; the above is the saved excerpt.</p> : null}
     </section>
   );
 }
 
 const contextLabels: Record<string, string> = {
-  user: "User Message",
-  assistant: "Agent Message",
-  text: "Agent Message",
-  tool_use: "Tool Request",
-  tool_result: "Tool Output",
+  user: "User message",
+  assistant: "Agent message",
+  text: "Agent message",
+  tool_use: "Tool request",
+  tool_result: "Tool output",
 };
 
-const actionLabels: Record<string, string> = { allow: "Allow", ask: "Request manual approval", deny: "Deny" };
+const actionLabels: Record<string, string> = { allow: "Allow", ask: "Escalate to human approval", deny: "Deny" };
 const executionLabels: Record<InterceptAudit["execution_status"], string> = {
-  not_started: "Not executed yet",
+  not_started: "Not started",
   not_executed: "Not executed",
-  awaiting_result: "Allowed, awaiting implementation results",
+  awaiting_result: "Allowed, awaiting execution result",
   succeeded: "Execution succeeded",
   failed: "Execution failed",
-  unknown: "Implementation results are unknown",
+  unknown: "Execution result unknown",
 };
 
 function ModelReviewContext({ input }: { input: InterceptReviewInput }) {
   return (
-    <section className="flex min-w-0 flex-col gap-4" aria-label={"Context review of the model"}>
+    <section className="flex min-w-0 flex-col gap-4" aria-label="Model review context">
       <div className="flex flex-col gap-2">
-        <h3 className="font-medium text-sm">Context review of the model</h3>
+        <h3 className="font-medium text-sm">Model review context</h3>
         <p className="text-muted-foreground text-xs">
-          The following is a snapshot of the input that is actually sent to the review model. The background is used to understand the current action and the decision is based on the review strategy.
-          {input.version < 4 ? "This record is entered in an old version and the contents that were actually sent at the time are preserved." : null}
+          Below is the snapshot of the input actually sent to the review model for this decision. The background only helps it understand the current action; the verdict follows the review policy.
+          {input.version < 4 ? "This record used the legacy input format; the content actually sent at the time is preserved." : null}
         </p>
       </div>
       <CodeBlock
-        label={"Current call pending review"}
+        label="Call under review"
         text={JSON.stringify({ tool_name: input.tool_name, arguments: input.arguments }, null, 2)}
       />
       {input.version >= 2 ? (
         input.background ? (
           <div className="flex min-w-0 flex-col gap-2">
             <CodeBlock
-              label={input.background.source === "user_message" ? "Background . User message" : "Background . Worker Intentional Summary (old version)"}
+              label={input.background.source === "user_message" ? "Background · user message" : "Background · Worker intent summary (legacy)"}
               text={input.background.text}
               truncated={input.background.truncated}
             />
             <p className="text-muted-foreground text-xs">
               {input.background.source === "user_message"
                 ? "Taken from the current user message."
-                : "This is an old version of the Worker intended summary; a new version of the Worker review does not send this content anymore."}
+                : "This is the legacy Worker intent summary that used to be sent; the new Worker review no longer sends it."}
             </p>
           </div>
         ) : (
-          <p className="text-muted-foreground text-xs">No background information was attached to the review.</p>
+          <p className="text-muted-foreground text-xs">No background message was attached to this review.</p>
         )
       ) : (
         <>
           {input.turn_input ? (
-            <CodeBlock label={"Current Round Input (old version)"} text={input.turn_input} truncated={input.background_truncated} />
+            <CodeBlock label="Current turn input (legacy)" text={input.turn_input} truncated={input.background_truncated} />
           ) : null}
           {input.task ? (
             <>
-              <CodeBlock label={"Job Description (old version)"} text={input.task.description} truncated={input.task.truncated} />
-              <CodeBlock label={"Mission objectives (old version)"} text={input.task.goal} truncated={input.task.truncated} />
-              <CodeBlock label={"Task Operating Constraint (old version)"} text={JSON.stringify(input.task.constraints, null, 2)} />
+              <CodeBlock label="Task description (legacy)" text={input.task.description} truncated={input.task.truncated} />
+              <CodeBlock label="Task goals (legacy)" text={input.task.goal} truncated={input.task.truncated} />
+              <CodeBlock label="Task operation constraints (legacy)" text={JSON.stringify(input.task.constraints, null, 2)} />
             </>
           ) : null}
           {input.worker_intent ? (
-            <CodeBlock label={"Worker Intention (old version)"} text={input.worker_intent} truncated={input.background_truncated} />
+            <CodeBlock label="Worker intent (legacy)" text={input.worker_intent} truncated={input.background_truncated} />
           ) : null}
         </>
       )}
-      {input.working_directory ? <CodeBlock label={"Work Directory"} text={input.working_directory} /> : null}
+      {input.working_directory ? <CodeBlock label="Working directory" text={input.working_directory} /> : null}
       {input.version >= 3 ? (
-        <p className="text-muted-foreground text-xs">The review did not send historical calls or results of implementation.</p>
+        <p className="text-muted-foreground text-xs">No past calls or execution results were sent for this review.</p>
       ) : (
         <div className="flex min-w-0 flex-col gap-3">
-          <h4 className="font-medium text-muted-foreground text-xs">Historical call for models available at the time (old version)</h4>
+          <h4 className="font-medium text-muted-foreground text-xs">Past calls provided to the model at the time (legacy)</h4>
           {input.history?.length ? (
             input.history.map((entry) => (
               <div key={entry.tool_use_id} className="flex min-w-0 flex-col gap-2 rounded-lg border p-3">
                 <p className="break-words font-medium text-xs">
-                  {entry.tool} · {entry.status === "succeeded" ? "Success" : "Failure (possibly partial side effects)"}
+                  {entry.tool} · {entry.status === "succeeded" ? "Succeeded" : "Failed (may have partial side effects)"}
                 </p>
-                <CodeBlock label={"Historical call parameters"} text={entry.arguments_preview} truncated={entry.truncated} />
-                <CodeBlock label={"Historical implementation results"} text={entry.result} truncated={entry.truncated} />
+                <CodeBlock label="Past call arguments" text={entry.arguments_preview} truncated={entry.truncated} />
+                <CodeBlock label="Past execution result" text={entry.result} truncated={entry.truncated} />
               </div>
             ))
           ) : (
-            <p className="text-muted-foreground text-xs">No records of the implementation of pairable historical tools are provided for this time.</p>
+            <p className="text-muted-foreground text-xs">No paired past tool executions were provided.</p>
           )}
           {input.history_truncated ? (
-            <p className="text-muted-foreground text-xs">A limited window with history has been cut off in part.</p>
+            <p className="text-muted-foreground text-xs">History is a limited window; some content is truncated.</p>
           ) : null}
         </div>
       )}
@@ -251,11 +251,11 @@ function ModelReviewContext({ input }: { input: InterceptReviewInput }) {
         <CollapsibleTrigger asChild>
           <Button variant="outline" size="sm" className="self-start">
             <ChevronDownIcon data-icon="inline-start" />
-            View complete model review input JSON
+            View full model review input JSON
           </Button>
         </CollapsibleTrigger>
         <CollapsibleContent className="pt-3">
-          <CodeBlock label={"Model review input"} text={JSON.stringify(input, null, 2)} />
+          <CodeBlock label="Model review input" text={JSON.stringify(input, null, 2)} />
         </CollapsibleContent>
       </Collapsible>
     </section>
@@ -316,7 +316,7 @@ export function ApprovalDetail({
         if (next.status === "pending" || next.audit?.execution_status === "awaiting_result")
           timer = setTimeout(() => void load(), 5000);
       } catch (e) {
-        if (!cancelled) setError((e as Error).message || "Loading details failed");
+        if (!cancelled) setError((e as Error).message || "Failed to load details");
       }
     }
     void load();
@@ -330,18 +330,18 @@ export function ApprovalDetail({
   const current = detail?.status === row.status ? detail : row;
   const audit = detail?.audit;
   let execution = audit ? executionLabels[audit.execution_status] : "Not recorded";
-  if (row.status === "pending") execution = "Not executed yet";
+  if (row.status === "pending") execution = "Not started";
   if (audit && audit.correlation !== "exact" && audit.effective_action === "allow") execution = "No linked execution result";
   const command = typeof row.tool_input?.command === "string" ? row.tool_input.command : undefined;
-  let initialLabel = source(row) === "model" ? "Initial model decision" : "Initial rule decision";
-  if (audit?.model_fallback) initialLabel = "Fallback after model error";
+  let initialLabel = source(row) === "model" ? "Model initial decision" : "Rule initial decision";
+  if (audit?.model_fallback) initialLabel = "Model error fallback";
 
   return (
     <div className="flex min-w-0 flex-col gap-4 p-3 sm:p-5">
       <div className="grid min-w-0 gap-5 rounded-xl border bg-muted/20 p-4 lg:grid-cols-2">
         <div className="flex min-w-0 flex-col gap-3">
           <CodeBlock
-            label={`${current.agent_name || current.conv_agent_key || "Agent"} :: Tool requests`}
+            label={`${current.agent_name || current.conv_agent_key || "Agent"} · tool request`}
             text={JSON.stringify(row.tool_input ?? {}, null, 2)}
           />
           {command ? (
@@ -349,39 +349,39 @@ export function ApprovalDetail({
               <CollapsibleTrigger asChild>
                 <Button variant="ghost" size="sm">
                   <ChevronDownIcon data-icon="inline-start" />
-                  View command contents
+                  View command content
                 </Button>
               </CollapsibleTrigger>
               <CollapsibleContent className="pt-2">
-                <CodeBlock label={"Command Contents"} text={command} />
+                <CodeBlock label="Command content" text={command} />
               </CollapsibleContent>
             </Collapsible>
           ) : null}
           <p className="text-muted-foreground text-xs">
-            Implementation result:<span className="text-foreground">{detail ? execution : "Loading…"}</span>
+            Execution result: <span className="text-foreground">{detail ? execution : "Loading…"}</span>
           </p>
         </div>
         <div className="flex min-w-0 flex-col gap-4 lg:border-l lg:pl-5">
           <h3 className="font-medium text-muted-foreground text-xs">
-            {current.status === "pending" ? "Status of review" : "Approval decision"}
+            {current.status === "pending" ? "Review status" : "Approval decision"}
           </h3>
           <div className="flex flex-wrap items-center gap-2">
             <StatusBadge status={current.status} />
             <MatchCell row={current} showReason={false} />
           </div>
           <p className="whitespace-pre-wrap break-words text-sm leading-7 [overflow-wrap:anywhere]">
-            {current.reason?.replace(/^\[模型\]\s*/, "") || "Reasons for approval not recorded"}
+            {current.reason?.replace(/^\[model\]\s*/, "") || "No approval reason recorded"}
           </p>
           {audit?.decision_reason ? <p className="text-sm">{audit.decision_reason}</p> : null}
-          {audit?.effective_action ? <p className="text-sm">Final action:{actionLabels[audit.effective_action]}</p> : null}
+          {audit?.effective_action ? <p className="text-sm">Final action: {actionLabels[audit.effective_action]}</p> : null}
           <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-2 text-xs">
             <dt className="text-muted-foreground">Source</dt>
             <dd className="break-words">
               <ApprovalOrigin row={current} detail />
             </dd>
-            <dt className="text-muted-foreground">Timing of application</dt>
+            <dt className="text-muted-foreground">Requested at</dt>
             <dd>{fmtTime(row.created_at)}</dd>
-            <dt className="text-muted-foreground">Time of decision</dt>
+            <dt className="text-muted-foreground">Decided at</dt>
             <dd>{fmtTime(current.decided_at)}</dd>
             {audit?.rule_name ? (
               <>
@@ -391,7 +391,7 @@ export function ApprovalDetail({
             ) : null}
             {audit?.profile_id ? (
               <>
-                <dt className="text-muted-foreground">Approving model configuration</dt>
+                <dt className="text-muted-foreground">Approval model profile</dt>
                 <dd>#{audit.profile_id}</dd>
               </>
             ) : null}
@@ -403,9 +403,9 @@ export function ApprovalDetail({
         <Alert variant="destructive">
           <AlertDescription>
             <div className="flex flex-wrap items-center gap-2">
-              <span>Failed to load details:{error}</span>
+              <span>Failed to load details: {error}</span>
               <Button variant="outline" size="sm" onClick={() => setRetry((v) => v + 1)}>
-                Retry Details
+                Retry
               </Button>
             </div>
           </AlertDescription>
@@ -414,7 +414,7 @@ export function ApprovalDetail({
       {!detail && !error ? <Skeleton className="h-8 w-60" /> : null}
       {detail && !audit ? (
         <Alert>
-          <AlertDescription>This record does not keep a snapshot of the details of the approval and cannot be restored to the context, the model's initial judgement and the execution output at that time.</AlertDescription>
+          <AlertDescription>This record has no saved approval detail snapshot, so the context, model initial decision, and execution output at the time cannot be restored.</AlertDescription>
         </Alert>
       ) : null}
       {audit ? (
@@ -422,7 +422,7 @@ export function ApprovalDetail({
           <CollapsibleTrigger asChild>
             <Button variant="ghost" size="sm">
               <ChevronDownIcon data-icon="inline-start" className={cn(more && "rotate-180")} />
-              {more ? "Close Context" : "View context and execution results"}
+              {more ? "Collapse context" : "View context and execution result"}
             </Button>
           </CollapsibleTrigger>
           <CollapsibleContent className="pt-4">
@@ -433,8 +433,8 @@ export function ApprovalDetail({
                 <Alert>
                   <AlertDescription>
                     {audit.model_input_digest
-                      ? "This historical record saves only a review of the entry fingerprints, does not save the original text and cannot restore the context that was sent to the model at the time. This does not mean that there is no context at the time of the review; the resulting model decision retains the input snapshot."
-                      : "This record does not keep model review input, which may be directly adjudicated by the rules, unusual before the model is called, or arising out of an old version."}
+                      ? "This legacy record saved only the review input fingerprint, not the input itself, so the context sent to the model at the time cannot be restored. This does not mean the review had no context; newly produced model decisions keep an input snapshot."
+                      : "This record has no saved model review input; it may have been decided directly by a rule, failed before the model call, or come from an old version."}
                   </AlertDescription>
                 </Alert>
               )}
@@ -444,38 +444,38 @@ export function ApprovalDetail({
                     <Button variant="ghost" size="sm">
                       <ChevronDownIcon data-icon="inline-start" />
                       {audit.model_input && audit.model_input.version >= 3
-                        ? "View session audit clips (no model sent)"
-                        : "View Session Audit Snippet"}
+                        ? "View conversation audit excerpt (not sent to model)"
+                        : "View conversation audit excerpt"}
                     </Button>
                   </CollapsibleTrigger>
                   <CollapsibleContent className="pt-3">
                     <div className="flex min-w-0 flex-col gap-3">
                       {audit.user_message ? (
                         <CodeBlock
-                          label={"Session Current Wheel Input (Audit Snippet)"}
+                          label="Conversation current-turn input (audit excerpt)"
                           text={audit.user_message}
                           truncated={audit.user_truncated}
                         />
                       ) : null}
                       <section className="flex min-w-0 flex-col gap-3">
-                        <h3 className="font-medium text-muted-foreground text-xs">Visible Session Context</h3>
+                        <h3 className="font-medium text-muted-foreground text-xs">Visible conversation context</h3>
                         <p className="text-muted-foreground text-xs">
-                          Save on {fmtTime(audit.captured_at)} . The actual use of the model is based on the Model Review Input.
+                          Conversation record excerpt saved at {fmtTime(audit.captured_at)}. What the model actually used follows "Model review input".
                         </p>
                         {audit.context_truncated ? (
-                          <p className="text-muted-foreground text-xs">Only the nearest context is saved and parts of it have been cut off.</p>
+                          <p className="text-muted-foreground text-xs">Only the most recent context is saved; some content is truncated.</p>
                         ) : null}
                         {audit.context?.length ? (
                           audit.context.map((entry, index) => (
                             <CodeBlock
                               key={`${entry.kind}-${entry.tool_use_id || index}`}
-                              label={`${contextLabels[entry.kind] ?? entry.kind}${entry.tool ? ` · ${entry.tool}` : ""}${entry.is_error ? " · Error" : ""}`}
+                              label={`${contextLabels[entry.kind] ?? entry.kind}${entry.tool ? ` · ${entry.tool}` : ""}${entry.is_error ? " · error" : ""}`}
                               text={entry.text}
                               truncated={entry.truncated}
                             />
                           ))
                         ) : (
-                          <p className="text-muted-foreground text-sm">No linked context recorded</p>
+                          <p className="text-muted-foreground text-sm">No linkable context recorded</p>
                         )}
                       </section>
                     </div>
@@ -483,29 +483,29 @@ export function ApprovalDetail({
                 </Collapsible>
               ) : null}
               <CodeBlock
-                label={`${initialLabel}：${actionLabels[audit.initial_action] ?? audit.initial_action}`}
-                text={audit.initial_reason.replace(/^\[模型\]\s*/, "")}
+                label={`${initialLabel}: ${actionLabels[audit.initial_action] ?? audit.initial_action}`}
+                text={audit.initial_reason.replace(/^\[model\]\s*/, "")}
               />
               <CodeBlock
-                label={"Execute Output"}
-                text={audit.output ?? (audit.execution_status === "not_executed" ? "Tool was not executed." : "No execution output yet")}
+                label="Execution output"
+                text={audit.output ?? (audit.execution_status === "not_executed" ? "Tool not executed." : "No execution output yet")}
                 truncated={audit.output_truncated}
               />
               {audit.correlation !== "exact" ? (
                 <Alert>
                   <AlertDescription>
                     {audit.correlation === "ambiguous"
-                      ? "There are simultaneous calls of the same parameters, which cannot be called by the only associated tool; this record does not show the presumed results of the execution."
-                      : "The only associated tool to call ID is not recorded."}
+                      ? "Concurrent calls with identical arguments exist, so the tool call cannot be uniquely linked; this record does not show a guessed execution result."
+                      : "No uniquely linkable tool call ID recorded."}
                   </AlertDescription>
                 </Alert>
               ) : null}
               <dl className="grid gap-2 text-muted-foreground text-xs [overflow-wrap:anywhere]">
-                <div>Tool Call ID:{audit.tool_use_id || "Not recorded"}</div>
-                <div>SHA-256:{audit.input_digest}</div>
-                <div>SHA-256:{audit.config_digest || "Not recorded"}</div>
-                {audit.model_input_digest ? <div>Model review input SHA-256:{audit.model_input_digest}</div> : null}
-                {audit.execution_ended_at ? <div>Results recorded at:{fmtTime(audit.execution_ended_at)}</div> : null}
+                <div>Tool call ID: {audit.tool_use_id || "Not recorded"}</div>
+                <div>Arguments digest SHA-256: {audit.input_digest}</div>
+                <div>Review config fingerprint SHA-256: {audit.config_digest || "Not recorded"}</div>
+                {audit.model_input_digest ? <div>Model review input SHA-256: {audit.model_input_digest}</div> : null}
+                {audit.execution_ended_at ? <div>Result recorded at: {fmtTime(audit.execution_ended_at)}</div> : null}
               </dl>
             </div>
           </CollapsibleContent>
@@ -562,16 +562,16 @@ function ApprovalTable({
       <TableHeader>
         <TableRow>
           <TableHead className="w-10">
-            <span className="sr-only">Expand Details</span>
+            <span className="sr-only">Expand details</span>
           </TableHead>
           <TableHead className="hidden w-14 sm:table-cell">#</TableHead>
-          <TableHead className="w-28">Tools</TableHead>
+          <TableHead className="w-28">Tool</TableHead>
           <TableHead className="hidden md:table-cell">Source</TableHead>
-          <TableHead className="hidden lg:table-cell">Match Rules</TableHead>
-          <TableHead className="hidden xl:table-cell">Parameters</TableHead>
+          <TableHead className="hidden lg:table-cell">Matched rule</TableHead>
+          <TableHead className="hidden xl:table-cell">Arguments</TableHead>
           <TableHead className="w-24">Status</TableHead>
-          <TableHead className="hidden w-36 lg:table-cell">Timing of application</TableHead>
-          <TableHead className="hidden w-36 xl:table-cell">Time of decision</TableHead>
+          <TableHead className="hidden w-36 lg:table-cell">Requested at</TableHead>
+          <TableHead className="hidden w-36 xl:table-cell">Decided at</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -589,7 +589,7 @@ function ApprovalTable({
                   <Button
                     variant="ghost"
                     size="icon-sm"
-                    aria-label={`${open ? "Collapse" : "Expand"}Approving#${row.id}`}
+                    aria-label={`${open ? "Collapse" : "Expand"} approval #${row.id}`}
                     aria-expanded={open}
                     aria-controls={open ? panelID : undefined}
                     onClick={(e) => {
@@ -633,7 +633,7 @@ function ApprovalTable({
               {open ? (
                 <TableRow className="hover:bg-transparent has-aria-expanded:bg-transparent">
                   <TableCell colSpan={columns} className="whitespace-normal p-0">
-                    <section id={panelID} aria-label={`Details of approval#${row.id}`}>
+                    <section id={panelID} aria-label={`Approval details #${row.id}`}>
                       <ApprovalDetail row={row} busy={busy} decide={decide} revision={revision} />
                     </section>
                   </TableCell>
@@ -753,7 +753,7 @@ export function ApprovalRecords({ taskId }: { taskId?: string }) {
       );
       setPendingRows((prev) => prev.filter((row) => row.id !== id));
       setRevision((v) => v + 1);
-      toast.success(decision === "allowed" ? "Execution allowed" : "Denied execution");
+      toast.success(decision === "allowed" ? "Execution allowed" : "Execution denied");
       // Re-fetch counts and rows: a decided item may no longer match the filter.
       await latestLoad.current(true);
     } catch (e) {
@@ -771,28 +771,28 @@ export function ApprovalRecords({ taskId }: { taskId?: string }) {
     .map((row) => ({
       conv_title: "",
       conv_agent_key: "",
-      rule_name: row.rule_id ? `Rule#${row.rule_id}` : "",
+      rule_name: row.rule_id ? `Rule #${row.rule_id}` : "",
       ...historyById.get(row.id),
       ...row,
     }));
-  const title = taskId ? "Intercept approvals" : "Approval history";
+  const title = taskId ? "Interception approval" : "Approval records";
   return (
     <div className="flex min-w-0 flex-col gap-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <ClipboardListIcon className="size-5 text-muted-foreground" />
           <h1 className="font-semibold text-xl">{title}</h1>
-          {pending.length ? <Badge variant="secondary">{pending.length} Pending approval</Badge> : null}
+          {pending.length ? <Badge variant="secondary">{pending.length} pending</Badge> : null}
         </div>
         <Button variant="outline" size="sm" onClick={() => void load(true)} disabled={loading || refreshing}>
           <RefreshCwIcon data-icon="inline-start" className={cn(refreshing && "animate-spin")} />
           Refresh
         </Button>
       </div>
-      <p className="text-muted-foreground text-sm">Record-reading of tool requests and approval of decisions, as well as context and implementation results.</p>
-      <FieldGroup className="flex-row flex-wrap items-end gap-3" aria-label={"Screening of approval records"}>
+      <p className="text-muted-foreground text-sm">Expand a record to view the tool request and approval decision, along with the context and execution result at the time.</p>
+      <FieldGroup className="flex-row flex-wrap items-end gap-3" aria-label="Approval record filters">
         <Field className="w-full sm:w-40">
-          <FieldLabel htmlFor={`${filterID}-status`}>Status of approval</FieldLabel>
+          <FieldLabel htmlFor={`${filterID}-status`}>Approval status</FieldLabel>
           <Select
             value={filter.status ?? "all"}
             onValueChange={(value) =>
@@ -832,10 +832,10 @@ export function ApprovalRecords({ taskId }: { taskId?: string }) {
             </SelectTrigger>
             <SelectContent>
               <SelectGroup>
-                <SelectItem value="all">All Sources</SelectItem>
-                <SelectItem value="model">Model determination</SelectItem>
-                <SelectItem value="rule">Rule determination</SelectItem>
-                <SelectItem value="unknown">Source unknown</SelectItem>
+                <SelectItem value="all">All sources</SelectItem>
+                <SelectItem value="model">Model decision</SelectItem>
+                <SelectItem value="rule">Rule decision</SelectItem>
+                <SelectItem value="unknown">Unknown source</SelectItem>
               </SelectGroup>
             </SelectContent>
           </Select>
@@ -848,26 +848,26 @@ export function ApprovalRecords({ taskId }: { taskId?: string }) {
       </FieldGroup>
       {error ? (
         <Alert variant="destructive">
-          <AlertDescription>Record loading failed:{error}. Click to refresh and retry.</AlertDescription>
+          <AlertDescription>Failed to load records: {error}. Click Refresh to retry.</AlertDescription>
         </Alert>
       ) : null}
       {pendingError ? (
         <Alert variant="destructive">
-          <AlertDescription>Loading pending approval failed:{pendingError}. Click to refresh and retry.</AlertDescription>
+          <AlertDescription>Failed to load pending approvals: {pendingError}. Click Refresh to retry.</AlertDescription>
         </Alert>
       ) : null}
       {pending.length ? (
         <section className="overflow-hidden rounded-xl border">
           <div className="flex items-center gap-2 border-b bg-muted/40 px-4 py-3 font-medium text-sm">
             <ShieldAlertIcon className="size-4" />
-            Pending (Pending){pending.length}）<span className="text-muted-foreground text-xs">Allowed or rejected after expansion</span>
+            Pending ({pending.length})<span className="text-muted-foreground text-xs">expand to allow or deny</span>
           </div>
-          <ApprovalTable rows={pending} busy={deciding} decide={decide} revision={revision} label={"Pending approval"} />
+          <ApprovalTable rows={pending} busy={deciding} decide={decide} revision={revision} label="Pending approvals" />
         </section>
       ) : null}
       <section className="overflow-hidden rounded-xl border">
         <div className="border-b px-4 py-3 font-medium text-sm">
-          {filtered ? "Filter Results" : "All Records"}（{total}）
+          {filtered ? "Filtered results" : "All records"} ({total})
         </div>
         {loading ? (
           <div className="flex flex-col gap-3 p-4">
@@ -882,17 +882,17 @@ export function ApprovalRecords({ taskId }: { taskId?: string }) {
               <EmptyMedia variant="icon">
                 <ClipboardListIcon />
               </EmptyMedia>
-              <EmptyTitle>{filtered ? "No clearances meeting the screening criteria" : "No approval records available"}</EmptyTitle>
+              <EmptyTitle>{filtered ? "No approval records match the filters" : "No approval records"}</EmptyTitle>
               <EmptyDescription>
                 {filtered
-                  ? "Please adjust the approval status or the source of the determination, or clear the filter to view all records."
-                  : "Once the rules or models have been approved, the records will be shown here."}
+                  ? "Adjust the approval status or decision source, or clear the filters to see all records."
+                  : "Records will appear here once a rule or model makes an approval decision."}
               </EmptyDescription>
             </EmptyHeader>
           </Empty>
         ) : null}
         {rows.length ? (
-          <ApprovalTable rows={rows} busy={deciding} decide={decide} revision={revision} label={"List of approval records"} />
+          <ApprovalTable rows={rows} busy={deciding} decide={decide} revision={revision} label="Approval record list" />
         ) : null}
         {!loading && !error ? (
           <TablePagination

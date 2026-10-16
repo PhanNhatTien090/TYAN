@@ -60,7 +60,7 @@ export default function CommandsPage() {
   const [total, setTotal] = React.useState(0);
   const [loading, setLoading] = React.useState(false);
 
-  // 各工具调用次数。弹窗打开时才拉取（多一次聚合查询，不必每次翻页都付）。
+  // Per-tool call counts. Fetched only when the dialog opens (one extra aggregate query, no need to pay for it on every page turn).
   const [statsOpen, setStatsOpen] = React.useState(false);
   const [stats, setStats] = React.useState<ToolStat[]>([]);
   const [statsLoading, setStatsLoading] = React.useState(false);
@@ -102,7 +102,7 @@ export default function CommandsPage() {
     };
   }, [page, size, queryQ, taskFilter]);
 
-  // 统计跟随筛选条件走，和表格描述的是同一批记录（但不分页）。
+  // Stats follow the filters and describe the same set of records as the table (without pagination).
   React.useEffect(() => {
     if (!statsOpen) return;
     let alive = true;
@@ -140,14 +140,14 @@ export default function CommandsPage() {
         <div className="relative max-w-sm flex-1">
           <SearchIcon className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder={"Search Tools/ Parameters..."}
+            placeholder="Search tools / arguments..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             className="h-8 pl-8"
           />
         </div>
         <Input
-          placeholder={"Task ID"}
+          placeholder="Task ID"
           className="h-8 w-28"
           value={taskFilter}
           onChange={(e) => setTaskFilter(e.target.value.replace(/\D/g, ""))}
@@ -167,7 +167,7 @@ export default function CommandsPage() {
 
         <Button variant="outline" size="sm" className="h-8" onClick={() => setStatsOpen(true)}>
           <BarChart3Icon className="size-4" />
-          Statistics
+          Stats
         </Button>
 
         <div className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
@@ -206,9 +206,9 @@ export default function CommandsPage() {
               <TableHeader className="sticky top-0 z-10 bg-card">
                 <TableRow>
                   <TableHead className="w-[130px]">Time</TableHead>
-                  <TableHead className="w-[60px]">Tasks</TableHead>
+                  <TableHead className="w-[60px]">Task</TableHead>
                   <TableHead className="w-[90px]">Worker</TableHead>
-                  <TableHead className="w-[110px]">Tools</TableHead>
+                  <TableHead className="w-[110px]">Tool</TableHead>
                   <TableHead>Input</TableHead>
                   <TableHead className="w-[60px]">Status</TableHead>
                 </TableRow>
@@ -223,7 +223,7 @@ export default function CommandsPage() {
                 ) : commands.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={6} className="py-12 text-center text-sm text-muted-foreground">
-                      No tool executions yet
+                      No tool execution records yet
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -272,21 +272,21 @@ export default function CommandsPage() {
         </Card>
       </div>
 
-      {/* 工具调用统计：与表格同一批记录（同筛选、不分页） */}
+      {/* Tool call stats: the same set of records as the table (same filters, no pagination) */}
       <Dialog open={statsOpen} onOpenChange={setStatsOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Tool call statistics</DialogTitle>
+            <DialogTitle>Tool call stats</DialogTitle>
             <DialogDescription>
-              {taskFilter || queryQ ? "All records under current filter" : "All tool execution records"}
+              {taskFilter || queryQ ? "All records under the current filters" : "All tool execution records"}
               {stats.length > 0 && (
                 <>
                   {" · "}
-                  <span className="tabular-nums">{stats.length}</span> A tool...{" "}
+                  <span className="tabular-nums">{stats.length}</span> tools ·{" "}
                   <span className="tabular-nums">{statsTotal}</span> calls
                   {statsErrors > 0 && (
                     <>
-                      {" • Failure "}
+                      {" · Failed "}
                       <span className="tabular-nums text-red-600 dark:text-red-400">{statsErrors}</span>
                     </>
                   )}
@@ -300,7 +300,7 @@ export default function CommandsPage() {
               <Loader2Icon className="mx-auto h-5 w-5 animate-spin text-muted-foreground" />
             </div>
           ) : stats.length === 0 ? (
-            <div className="py-10 text-center text-sm text-muted-foreground">No statistics available</div>
+            <div className="py-10 text-center text-sm text-muted-foreground">No stats data</div>
           ) : (
             <div className="-mr-2 max-h-[55vh] space-y-1 overflow-auto pr-2">
               {stats.map((s) => (

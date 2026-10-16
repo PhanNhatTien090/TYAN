@@ -63,3 +63,6 @@ Thumbs.db
 /bench/
 /Dockerfile.bench
 /Dockerfile.bench.v2
+
+# Database and evidence backups must remain private.
+/backups/

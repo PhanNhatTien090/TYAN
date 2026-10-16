@@ -96,14 +96,14 @@ function domainHostname(value: string): string | null {
 
 export function companyScopeRuleError(rule: CompanyScopeRule): string {
   const value = rule.value.trim();
-  if (!value) return "Please fill in the range value";
+  if (!value) return "Please enter a scope value";
   if (Array.from(value).length > MAX_COMPANY_SCOPE_VALUE_LENGTH) {
     return `At most ${MAX_COMPANY_SCOPE_VALUE_LENGTH} characters`;
   }
   if (rule.kind === "domain") {
-    if (/\s/.test(value)) return "Please enter a valid domain name or URL without spaces";
+    if (/\s/.test(value)) return "Enter a valid domain or URL without spaces";
     const hostname = domainHostname(value);
-    if (!hostname || ipVersion(hostname) !== null) return "Enter a valid domain name or URL";
+    if (!hostname || ipVersion(hostname) !== null) return "Enter a valid domain or URL";
     const labels = hostname.split(".");
     if (
       hostname.length > 253 ||
@@ -113,20 +113,20 @@ export function companyScopeRuleError(rule: CompanyScopeRule): string {
           !label || label.length > 63 || label.startsWith("-") || label.endsWith("-") || !/^[a-z0-9-]+$/i.test(label),
       )
     ) {
-      return "Enter a valid domain name or URL";
+      return "Enter a valid domain or URL";
     }
   }
-  if (rule.kind === "ip" && ipVersion(value) === null) return "Please enter a valid IP";
+  if (rule.kind === "ip" && ipVersion(value) === null) return "Enter a valid IP";
   if (rule.kind === "cidr") {
     const separator = value.lastIndexOf("/");
-    if (separator <= 0) return "Enter the CIDR segment";
+    if (separator <= 0) return "Enter a valid CIDR network";
     const address = value.slice(0, separator);
     const prefixText = value.slice(separator + 1);
     const version = ipVersion(address);
-    if (version === null || !/^\d+$/.test(prefixText)) return "Enter the CIDR segment";
+    if (version === null || !/^\d+$/.test(prefixText)) return "Enter a valid CIDR network";
     const prefix = Number(prefixText);
-    if (version === 4 && (prefix < 16 || prefix > 32)) return "IPv4 web prefix needs to be 16 to 32";
-    if (version === 6 && (prefix < 32 || prefix > 128)) return "IPv6 web prefix needs to be /32 to /128";
+    if (version === 4 && (prefix < 16 || prefix > 32)) return "IPv4 prefix must be between /16 and /32";
+    if (version === 6 && (prefix < 32 || prefix > 128)) return "IPv6 prefix must be between /32 and /128";
   }
   return "";
 }
@@ -156,7 +156,7 @@ export function classifyCompanyScopeLine(
     return error ? { line, error } : { line, rule };
   }
   if (ipVersion(value) !== null) return { line, rule: { kind: "ip", value } };
-  if (looksLikeIPAddress(value)) return { line, error: "Please enter a valid IP" };
+  if (looksLikeIPAddress(value)) return { line, error: "Enter a valid IP" };
 
   const looksLikeDomain = value.includes("://") || (!/\s/.test(value) && value.includes("."));
   if (looksLikeDomain) {
@@ -166,7 +166,7 @@ export function classifyCompanyScopeLine(
     const error = companyScopeRuleError(rule);
     return error ? { line, error } : { line, rule };
   }
-  if (/icp|备案/i.test(value)) return { line, rule: { kind: "icp", value } };
+  if (/icp|filing/i.test(value)) return { line, rule: { kind: "icp", value } };
   return { line, rule: { kind: "keyword", value } };
 }
 

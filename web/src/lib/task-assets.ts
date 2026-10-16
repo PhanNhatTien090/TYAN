@@ -1,7 +1,7 @@
 import type { NewAssetType } from "@/lib/types";
 
 const ASSET_TYPE_LABELS: Record<NewAssetType, string> = {
-  app: "Application",
+  app: "App",
   endpoint: "Endpoint",
   ip: "IP",
   root_domain: "Root domain",
@@ -10,13 +10,13 @@ const ASSET_TYPE_LABELS: Record<NewAssetType, string> = {
 };
 
 const TASK_ASSET_SOURCE_LABELS: Record<string, string> = {
-  agent: "Discovered by agent",
+  agent: "Agent-discovered",
   anchor: "Blackboard anchor",
   api: "Assets API",
-  company: "Organization link",
-  legacy: "Legacy link",
-  manual: "Added manually",
-  system: "System link",
+  company: "Company association",
+  legacy: "Legacy association",
+  manual: "Manually added",
+  system: "System association",
   task: "Task initialization",
 };
 

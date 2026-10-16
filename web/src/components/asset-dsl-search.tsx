@@ -8,173 +8,173 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 // ── DSL autocomplete ──────────────────────────────────────────────────────────
-// Shared by the global asset view (/function/assets) and the per-task 测试资产
+// Shared by the global asset view (/function/assets) and the per-task test assets
 // search, so both search boxes behave and look identical.
 
 const DSL_FIELDS: { name: string; desc: string; ops: { op: string; desc: string }[] }[] = [
   {
     name: "domain",
-    desc: "Domain name (root domain/subdomain/service domain)",
+    desc: "Domain (root domain/subdomain/service domain)",
     ops: [
-      { op: "=", desc: "Contains" },
-      { op: "==", desc: "Exact match" },
-      { op: "!=", desc: "Exclude" },
+      { op: "=", desc: "fuzzy match" },
+      { op: "==", desc: "exact match" },
+      { op: "!=", desc: "exclude" },
     ],
   },
   {
     name: "ip",
-    desc: "IPv4/IPv6 Address",
+    desc: "IPv4/IPv6 address",
     ops: [
-      { op: "=", desc: "Contains" },
-      { op: "==", desc: "Exact match" },
-      { op: "!=", desc: "Exclude" },
+      { op: "=", desc: "fuzzy match" },
+      { op: "==", desc: "exact match" },
+      { op: "!=", desc: "exclude" },
     ],
   },
   {
     name: "url",
-    desc: "Full URL (service/interface)",
+    desc: "Full URL (service/endpoint)",
     ops: [
-      { op: "=", desc: "Contains" },
-      { op: "==", desc: "Exact match" },
-      { op: "!=", desc: "Exclude" },
+      { op: "=", desc: "fuzzy match" },
+      { op: "==", desc: "exact match" },
+      { op: "!=", desc: "exclude" },
     ],
   },
   {
     name: "root_domain",
     desc: "Root domain",
     ops: [
-      { op: "=", desc: "Contains" },
-      { op: "==", desc: "Exact match" },
-      { op: "!=", desc: "Exclude" },
+      { op: "=", desc: "fuzzy match" },
+      { op: "==", desc: "exact match" },
+      { op: "!=", desc: "exclude" },
     ],
   },
   {
     name: "page_title",
-    desc: "Page Title (HTTP Service)",
+    desc: "Page title (HTTP service)",
     ops: [
-      { op: "=", desc: "Contains" },
-      { op: "==", desc: "Exact match" },
-      { op: "!=", desc: "Exclude" },
+      { op: "=", desc: "fuzzy match" },
+      { op: "==", desc: "exact match" },
+      { op: "!=", desc: "exclude" },
     ],
   },
   {
     name: "icp",
-    desc: "ICP file number",
+    desc: "ICP filing number",
     ops: [
-      { op: "=", desc: "Contains" },
-      { op: "==", desc: "Exact match" },
-      { op: "!=", desc: "Exclude" },
+      { op: "=", desc: "fuzzy match" },
+      { op: "==", desc: "exact match" },
+      { op: "!=", desc: "exclude" },
     ],
   },
   {
     name: "service_name",
     desc: "Service name (non-HTTP service)",
     ops: [
-      { op: "=", desc: "Contains" },
-      { op: "==", desc: "Exact match" },
-      { op: "!=", desc: "Exclude" },
+      { op: "=", desc: "fuzzy match" },
+      { op: "==", desc: "exact match" },
+      { op: "!=", desc: "exclude" },
     ],
   },
   {
     name: "app_name",
-    desc: "Application name",
+    desc: "App name",
     ops: [
-      { op: "=", desc: "Contains" },
-      { op: "==", desc: "Exact match" },
-      { op: "!=", desc: "Exclude" },
+      { op: "=", desc: "fuzzy match" },
+      { op: "==", desc: "exact match" },
+      { op: "!=", desc: "exclude" },
     ],
   },
   {
     name: "bundle_id",
-    desc: "Application bundle ID",
+    desc: "App Bundle ID",
     ops: [
-      { op: "=", desc: "Contains" },
-      { op: "==", desc: "Exact match" },
-      { op: "!=", desc: "Exclude" },
+      { op: "=", desc: "fuzzy match" },
+      { op: "==", desc: "exact match" },
+      { op: "!=", desc: "exclude" },
     ],
   },
   {
     name: "category",
-    desc: "Application category",
+    desc: "App category",
     ops: [
-      { op: "=", desc: "Contains" },
-      { op: "==", desc: "Exact match" },
-      { op: "!=", desc: "Exclude" },
+      { op: "=", desc: "fuzzy match" },
+      { op: "==", desc: "exact match" },
+      { op: "!=", desc: "exclude" },
     ],
   },
   {
     name: "app_icp",
-    desc: "Application ICP registration",
+    desc: "App ICP filing",
     ops: [
-      { op: "=", desc: "Contains" },
-      { op: "==", desc: "Exact match" },
-      { op: "!=", desc: "Exclude" },
+      { op: "=", desc: "fuzzy match" },
+      { op: "==", desc: "exact match" },
+      { op: "!=", desc: "exclude" },
     ],
   },
   {
     name: "method",
-    desc: "HTTP Method GET/POST/PUT/...",
+    desc: "HTTP method GET/POST/PUT/…",
     ops: [
-      { op: "==", desc: "Exact match" },
-      { op: "!=", desc: "Exclude" },
+      { op: "==", desc: "exact match" },
+      { op: "!=", desc: "exclude" },
     ],
   },
   {
     name: "service_type",
-    desc: "Type of service: http://www.un.org/un.org/",
+    desc: "Service type: http | other",
     ops: [
-      { op: "==", desc: "Exact match" },
-      { op: "!=", desc: "Exclude" },
+      { op: "==", desc: "exact match" },
+      { op: "!=", desc: "exclude" },
     ],
   },
   {
     name: "record_type",
-    desc: "DNS Parsing Type A/CNAME/MX/...",
+    desc: "DNS record type A/CNAME/MX/…",
     ops: [
-      { op: "==", desc: "Exact match" },
-      { op: "!=", desc: "Exclude" },
+      { op: "==", desc: "exact match" },
+      { op: "!=", desc: "exclude" },
     ],
   },
   {
     name: "technology",
-    desc: "Technical Fingerprints (array fields)",
+    desc: "Technology fingerprint (array field)",
     ops: [
-      { op: "=", desc: "Contains" },
-      { op: "==", desc: "Exact match" },
-      { op: "!=", desc: "Exclude" },
+      { op: "=", desc: "fuzzy match" },
+      { op: "==", desc: "exact match" },
+      { op: "!=", desc: "exclude" },
     ],
   },
   {
     name: "port",
     desc: "Port number (integer)",
     ops: [
-      { op: "==", desc: "Equals" },
-      { op: "!=", desc: "Not equal to" },
-      { op: ">", desc: "Greater than" },
-      { op: ">=", desc: "greater than or equal to" },
+      { op: "==", desc: "equals" },
+      { op: "!=", desc: "not equals" },
+      { op: ">", desc: "greater than" },
+      { op: ">=", desc: "greater than or equal" },
       { op: "<", desc: "less than" },
-      { op: "<=", desc: "less than equal to" },
+      { op: "<=", desc: "less than or equal" },
     ],
   },
   {
     name: "status_code",
     desc: "HTTP status code (integer)",
     ops: [
-      { op: "==", desc: "Equals" },
-      { op: "!=", desc: "Not equal to" },
-      { op: ">", desc: "Greater than" },
-      { op: ">=", desc: "greater than or equal to" },
+      { op: "==", desc: "equals" },
+      { op: "!=", desc: "not equals" },
+      { op: ">", desc: "greater than" },
+      { op: ">=", desc: "greater than or equal" },
       { op: "<", desc: "less than" },
-      { op: "<=", desc: "less than equal to" },
+      { op: "<=", desc: "less than or equal" },
     ],
   },
-  { name: "company_id", desc: "Organization ID (integer)", ops: [{ op: "==", desc: "Equals" }] },
-  { name: "task_id", desc: "Source task ID (integer)", ops: [{ op: "==", desc: "Equals" }] },
+  { name: "company_id", desc: "Owning company ID (integer)", ops: [{ op: "==", desc: "equals" }] },
+  { name: "task_id", desc: "Source task ID (integer)", ops: [{ op: "==", desc: "equals" }] },
 ];
 
 const LOGIC_OPS = [
-  { label: "AND", desc: "and (both conditions are met)" },
-  { label: "OR", desc: "or (satisfaction with one of them)" },
+  { label: "AND", desc: "AND (both conditions must match)" },
+  { label: "OR", desc: "OR (either one matches)" },
 ];
 
 interface DslSuggestion {
@@ -261,7 +261,7 @@ const KIND_STYLE: Record<string, string> = {
 };
 
 // AssetDslSearch is the shared DSL search box: a monospace input with a
-// field/operator/logic autocomplete popover and a status line ("找到 N 条" /
+// field/operator/logic autocomplete popover and a status line ("found N" /
 // error / loading). Used by both the global asset view and the per-task view.
 export function AssetDslSearch({
   query,
@@ -341,7 +341,7 @@ export function AssetDslSearch({
         <SearchIcon className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           ref={inputRef}
-          placeholder={"DSL search: domain=example AND status_code>=400"}
+          placeholder="DSL search: domain=example AND status_code>=400"
           value={query}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
@@ -375,7 +375,7 @@ export function AssetDslSearch({
       </div>
       {query.trim() && !open && (
         <p className="pl-1 text-[11px] text-muted-foreground">
-          {loading ? "Searching..." : error ? <span className="text-destructive">{error}</span> : `Found ${count ?? 0} records`}
+          {loading ? "Searching…" : error ? <span className="text-destructive">{error}</span> : `Found ${count ?? 0}`}
         </p>
       )}
     </div>

@@ -73,7 +73,7 @@ export function TrafficEvidenceViewer({
         <DialogHeader>
           <DialogTitle>Traffic evidence #{bindingId}</DialogTitle>
           <DialogDescription className="break-all">
-            {detail?.binding.snapshot.url ?? "View requests and responses when bound"}
+            {detail?.binding.snapshot.url ?? "View the request and response saved at binding time"}
           </DialogDescription>
         </DialogHeader>
         {error ? (
@@ -90,7 +90,7 @@ export function TrafficEvidenceViewer({
               <TabsContent key={side} value={side}>
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <span className="text-xs text-muted-foreground">
-                    Body {detail[side].total.toLocaleString()} Bytes{detail[side].truncated ? " • Current for preview" : ""}
+                    Body {detail[side].total.toLocaleString()} bytes{detail[side].truncated ? " · preview" : ""}
                   </span>
                   <Button
                     variant="outline"
@@ -101,7 +101,7 @@ export function TrafficEvidenceViewer({
                         .catch((e: Error) => toast.error(e.message))
                     }
                   >
-                    Download Full{side === "request" ? "Request" : "Response"}Body
+                    Download full {side === "request" ? "request" : "response"} body
                   </Button>
                 </div>
                 <HttpCodeBlock
@@ -109,7 +109,7 @@ export function TrafficEvidenceViewer({
                 />
                 {detail[side].truncated && !detail[side].binary ? (
                   <Button variant="outline" size="sm" disabled={busy} onClick={() => void more(side)}>
-                    Load More Body
+                    Load more body
                   </Button>
                 ) : null}
               </TabsContent>
@@ -152,8 +152,8 @@ export function CapturedTrafficViewer({ id, onClose }: { id: string | null; onCl
     >
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl">
         <DialogHeader>
-          <DialogTitle>Preview traffic</DialogTitle>
-          <DialogDescription>Flow ID:{id}. The full text is saved when bound.</DialogDescription>
+          <DialogTitle>Traffic preview</DialogTitle>
+          <DialogDescription>Traffic ID: {id}. The full body is saved when binding.</DialogDescription>
         </DialogHeader>
         {error ? (
           <Alert variant="destructive">

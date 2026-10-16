@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <style>
+    body { font: 13px system-ui, sans-serif; width: 320px; margin: 0; padding: 12px; }
+    h1 { font-size: 14px; margin: 0 0 10px; }
+    label { display: block; margin: 8px 0 2px; color: #444; }
+    input { width: 100%; box-sizing: border-box; padding: 5px; }
+    button { margin-top: 10px; padding: 6px 12px; cursor: pointer; }
+    #start { background: #1d4ed8; color: #fff; border: 0; border-radius: 4px; }
+    #stop { background: #eee; border: 1px solid #ccc; border-radius: 4px; }
+    #status { margin-top: 10px; line-height: 1.5; color: #333; }
+    #error { color: #b91c1c; white-space: pre-wrap; }
+    .muted { color: #777; font-size: 11px; margin-top: 10px; line-height: 1.4; }
+  </style>
+</head>
+<body>
+  <h1>TYAN Traffic Capture</h1>
+
+  <label for="serverUrl">TYAN URL</label>
+  <input id="serverUrl" placeholder="http://localhost:8787" />
+  <label for="labOrigin">Isolated lab origin</label>
+  <input id="labOrigin" placeholder="http://127.0.0.1:3000" />
+  <label for="token">Token</label>
+  <input id="token" type="password" placeholder="TYAN JWT (localStorage artex_token)" />
+
+  <button id="save">Save settings</button>
+  <button id="start">Start capture</button>
+  <button id="stop">Stop</button>
+  <button id="flush">Flush now</button>
+
+  <div id="status"></div>
+  <div id="error"></div>
+
+  <p class="muted">
+    Only the configured local lab origin is captured. Request/response bodies are
+    omitted, query values are redacted, and only basic content headers are kept.
+    Tokens are held for this browser session only. URL paths may still contain
+    sensitive information: use dedicated lab data. Stop when finished.
+  </p>
+
+  <script src="privacy.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

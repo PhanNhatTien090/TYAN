@@ -74,7 +74,7 @@ import { cn } from "@/lib/utils";
 // keeps the model id in its tooltip. Env-backed configs can arrive without a name,
 // so fall back to the model id rather than rendering an empty badge.
 function resolutionLabel(r: TaskLLMResolution): string {
-  return r.name || r.model || "Unnamed Configuration";
+  return r.name || r.model || "Unnamed config";
 }
 
 // fmtBytes renders a human file size for attachment chips (mirrors transcript.tsx).
@@ -163,25 +163,25 @@ function mergeBySeq(current: Activity[], incoming: Activity[]): Activity[] {
 }
 
 // statusIcon maps a session status to its icon. Worker terminal states are
-// distinct & color-coded: 完成(绿勾圈) / 取消停止(琥珀斜杠圈) / 出错(红叉圈) /
-// 步数耗尽(紫). running=蓝色转圈, pending(待领取)=灰时钟.
+// distinct & color-coded: done (green check circle) / stopped (amber slash circle) / error (red X circle) /
+// steps exhausted (violet). running = blue spinner, pending (open) = gray clock.
 function statusIcon(status: SessionStatus) {
   switch (status) {
-    case "running": // 执行中
+    case "running": // executing
       return <Loader2Icon className="size-3.5 animate-spin text-blue-500" />;
     case "paused":
       return <PauseIcon className="size-3.5 text-amber-500" />;
-    case "pending": // 待领取(open intent)
+    case "pending": // open to claim (open intent)
       return <ClockIcon className="size-3.5 text-muted-foreground" />;
-    case "done": // 完成
+    case "done": // completed
       return <CircleCheckIcon className="size-3.5 text-emerald-500" />;
-    case "stopped": // 取消/停止(被 planner 终止)
+    case "stopped": // cancelled/stopped (terminated by the planner)
       return <CircleSlashIcon className="size-3.5 text-amber-500" />;
-    case "blocked": // 出错
+    case "blocked": // error
       return <CircleXIcon className="size-3.5 text-red-500" />;
-    case "exhausted": // 步数耗尽(撞 max_turns)
+    case "exhausted": // steps exhausted (hit max_turns)
       return <ZapOffIcon className="size-3.5 text-violet-500" />;
-    case "deleted": // 用户假删除
+    case "deleted": // soft-deleted by the user
       return <CircleSlashIcon className="size-3.5 text-muted-foreground" />;
   }
 }
@@ -234,7 +234,7 @@ function fmtDuration(ms: number): string {
 }
 
 const roleMeta = {
-  mainagent: { label: "Primary agent", icon: UserIcon },
+  mainagent: { label: "Main Agent", icon: UserIcon },
   planner: { label: "Planner", icon: BrainIcon },
   worker: { label: "Workers", icon: RadioIcon },
   system: { label: "System audit", icon: HistoryIcon },
@@ -244,12 +244,12 @@ const roleMeta = {
 // dedicated backend "sessions" endpoint — it is a fixed UI affordance whose
 // transcript is the main-agent activity stream (worker="mainagent") for the task.
 // A main-agent session is one resettable conversation segment. Segment 0 is the
-// original session; "新建会话" creates further segments (seq 1,2,…) so the agent
+// original session; "New session" creates further segments (seq 1,2,…) so the agent
 // starts on a clean transcript while the task's graph/assets/goal stay shared. Each
 // segment is a switchable UI session; only the current (highest) one is writable.
 const mainSessionId = (seg: number) => `s-main-${seg}`;
 const mainSessionKey = (seg: number) => `main:${seg}`;
-const mainSessionTitle = (seg: number) => `Lord Agent. Session #${seg + 1}`;
+const mainSessionTitle = (seg: number) => `Main Agent · Session #${seg + 1}`;
 const MAIN_ID = mainSessionId(0);
 const MAIN_SESSION: Session = {
   id: MAIN_ID,
@@ -269,7 +269,7 @@ const PLANNER_ID = "s-planner";
 const PLANNER_SESSION: Session = {
   id: PLANNER_ID,
   role: "planner",
-  title: "Planning Planner. Posturing.",
+  title: "Planner · situational analysis",
   status: "running",
   live: true,
   last_activity: "",
@@ -282,7 +282,7 @@ const SYSTEM_ID = "s-system";
 const SYSTEM_SESSION: Session = {
   id: SYSTEM_ID,
   role: "system",
-  title: "System event LLM failure transfer",
+  title: "System events · LLM failover",
   status: "done",
   live: false,
   last_activity: "",
@@ -309,9 +309,9 @@ function intentStatus(state: string): SessionStatus {
       return "stopped";
     case "paused":
       return "paused";
-    case "open": // 待领取，区别于执行中
+    case "open": // open to claim, distinct from executing
       return "pending";
-    case "deleted": // 用户假删除
+    case "deleted": // soft-deleted by the user
       return "deleted";
     default: // running
       return "running";
@@ -369,7 +369,7 @@ function SessionItem({
     s.role === "worker" &&
     !s.inherited &&
     !deleted &&
-    // pending = 待领(open)意图;连同运行中/已暂停都允许删除。
+    // pending = open (unclaimed) intent; running and paused ones are also deletable.
     (s.status === "running" || s.status === "paused" || s.status === "pending");
   return (
     <div
@@ -391,7 +391,7 @@ function SessionItem({
         )}
         {s.inherited && s.source_task_id && (
           <Badge variant="outline" className="shrink-0">
-            Source#{s.source_task_id}
+            Source #{s.source_task_id}
           </Badge>
         )}
         <span
@@ -425,8 +425,8 @@ function SessionItem({
             size="icon-xs"
             onClick={onCancel}
             disabled={controlling}
-            title={"Delete this intent (provide a reason and choose soft or permanent deletion)"}
-            aria-label={"Delete this intent (provide a reason and choose soft or permanent deletion)"}
+            title="Delete this intent (reason required; soft or hard delete)"
+            aria-label="Delete this intent (reason required; soft or hard delete)"
             className="text-destructive hover:text-destructive"
           >
             <Trash2Icon />
@@ -456,7 +456,7 @@ function WorkerAssetBadge({ assets }: { assets: IntentAsset[] }) {
     <Tooltip>
       <TooltipTrigger asChild>
         <Badge variant="outline" className="max-w-60 shrink-0 font-normal" title={firstRawLabel}>
-          <span className="truncate">Current assets:{firstLabel}</span>
+          <span className="truncate">Current assets: {firstLabel}</span>
           {displayAssets.length > 1 && <span className="shrink-0 tabular-nums">+{displayAssets.length - 1}</span>}
         </Badge>
       </TooltipTrigger>
@@ -467,7 +467,7 @@ function WorkerAssetBadge({ assets }: { assets: IntentAsset[] }) {
               <div className="break-all font-mono text-xs">{asset.label.trim() || `#${asset.asset_id}`}</div>
               <div className="mt-0.5 text-xs text-muted-foreground">
                 {taskAssetTypeLabel(asset.type)} · {taskAssetSourceLabel(asset.source)}
-                {asset.inherited ? ` • Origin #${asset.source_task_id}` : ""}
+                {asset.inherited ? ` · from source task #${asset.source_task_id}` : ""}
               </div>
               <div className="mt-0.5 [overflow-wrap:anywhere] text-xs">{asset.source_summary}</div>
             </div>
@@ -515,9 +515,9 @@ export function SessionsTab({ taskId }: { taskId: string }) {
   const [currentSeg, setCurrentSeg] = React.useState(0);
   const [creatingMain, setCreatingMain] = React.useState(false);
   const [confirmNewMain, setConfirmNewMain] = React.useState(false);
-  // 手机端（<lg）会话列表默认折叠：屏幕高度本就紧张，列表若固定占掉 10~15rem，
-  // 下方的会话记录会被挤到只剩标题与输入框。折叠后记录区拿到几乎全部高度，
-  // 点标题栏可展开选会话，选完自动收起。桌面端不受影响（lg 起始终展开）。
+  // On mobile (<lg) the session list is collapsed by default: screen height is already tight, and a fixed 10~15rem list
+  // would squeeze the transcript below down to just the header and input. Collapsed, the transcript gets nearly all the height;
+  // tapping the title bar expands it to pick a session, collapsing again after choosing. Desktop is unaffected (always expanded from lg up).
   const [listOpen, setListOpen] = React.useState(false);
   // Per-session lazily-loaded caches, keyed by session_key (main | plan | intent:<id>).
   const [store, setStore] = React.useState<SessionStore>({});
@@ -536,12 +536,12 @@ export function SessionsTab({ taskId }: { taskId: string }) {
   const [controllingIntent, setControllingIntent] = React.useState<string | null>(null);
   const [cancelIntent, setCancelIntent] = React.useState<Session | null>(null);
   const [cancelReason, setCancelReason] = React.useState("");
-  // 删除模式:soft=假删除(默认,置 deleted + 记原因,保留数据)| hard=真删除(级联移除独占子孙)。
+  // Delete mode: soft = soft delete (default, sets deleted + records the reason, keeps data) | hard = hard delete (cascade-removes exclusive descendants).
   const [deleteMode, setDeleteMode] = React.useState<"soft" | "hard">("soft");
   const [workerMessage, setWorkerMessage] = React.useState("");
   const [workerMessageRequestId, setWorkerMessageRequestId] = React.useState("");
   const [workerMessageSending, setWorkerMessageSending] = React.useState(false);
-  // 方式1 文件上传:选好的附件(已落到任务工作目录 uploads/),随下条消息一起发。
+  // Method 1, file upload: chosen attachments (already landed in the task work dir uploads/) are sent with the next message.
   const [attachments, setAttachments] = React.useState<ChatAttachment[]>([]);
   const [uploading, setUploading] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -553,7 +553,7 @@ export function SessionsTab({ taskId }: { taskId: string }) {
       const r = await api.chatUpload("task", taskId, Array.from(files));
       setAttachments((prev) => [...prev, ...r.attachments]);
     } catch (e) {
-      toast.error(`Upload failed:${(e as Error).message}`);
+      toast.error(`Upload failed: ${(e as Error).message}`);
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -576,7 +576,7 @@ export function SessionsTab({ taskId }: { taskId: string }) {
       setListOpen(false);
       setInput("");
     } catch (e) {
-      toast.error(`Failed to create session:${(e as Error).message}`);
+      toast.error(`Failed to create session: ${(e as Error).message}`);
     } finally {
       setCreatingMain(false);
       setConfirmNewMain(false);
@@ -596,7 +596,7 @@ export function SessionsTab({ taskId }: { taskId: string }) {
     async (session: Session, action: "pause" | "resume" | "cancel", reason?: string, mode?: "soft" | "hard") => {
       if (!session.intent_id || session.inherited || controllingIntent) return;
       if (action === "cancel" && !reason?.trim()) {
-        toast.error("Please fill in the reason for the deletion.");
+        toast.error("Please provide a deletion reason");
         return;
       }
       setControllingIntent(session.intent_id);
@@ -604,25 +604,25 @@ export function SessionsTab({ taskId }: { taskId: string }) {
         const res = await api.controlIntent(taskId, session.intent_id, action, reason, mode);
         if (action === "pause") {
           patchIntentState(session.intent_id, "paused");
-          toast.success(`Worker #${session.intent_id} Paused`);
+          toast.success(`Worker #${session.intent_id} paused`);
         } else if (action === "resume") {
           patchIntentState(session.intent_id, "open");
-          toast.success(`Worker #${session.intent_id} Restored; awaiting reassignment`);
+          toast.success(`Worker #${session.intent_id} resumed, waiting to be re-claimed`);
         } else if (mode === "hard") {
-          // 真删除:意图及独占下游已物理移除,从列表剔除该行。
+          // Hard delete: the intent and its exclusive downstream are physically removed; drop the row from the list.
           patchIntentState(session.intent_id);
           const d = res.deleted;
-          const extra = d ? `(includes) ${d.intents} Intent / ${d.facts} Facts / ${d.findings} findings)` : "";
-          toast.success(`Worker #${session.intent_id} And its exclusive downstream has been completely removed.${extra}`);
+          const extra = d ? ` (including ${d.intents} intents / ${d.facts} facts / ${d.findings} findings)` : "";
+          toast.success(`Worker #${session.intent_id} and its exclusive downstream were permanently deleted${extra}`);
           setCancelReason("");
         } else {
-          // 假删除:意图置 deleted、记录删除原因,保留节点与产出。
+          // Soft delete: the intent is set to deleted with the reason recorded; nodes and output are kept.
           patchIntentState(session.intent_id, "deleted");
-          toast.success(`Worker #${session.intent_id} Deleted (for reasons documented and reprogrammed by planners)`);
+          toast.success(`Worker #${session.intent_id} deleted (reason recorded; the planner will re-plan accordingly)`);
           setCancelReason("");
         }
       } catch (error) {
-        toast.error(`Worker operation failed:${(error as Error).message}`);
+        toast.error(`Worker operation failed: ${(error as Error).message}`);
       } finally {
         setControllingIntent(null);
         setCancelIntent(null);
@@ -1156,7 +1156,7 @@ export function SessionsTab({ taskId }: { taskId: string }) {
     for (const node of allIntents) {
       let title = `Intent ${node.id}`;
       let parsedPayload: unknown = node.payload;
-      // 假删除:意图 state='deleted',删除原因在独立字段 delete_reason 上。
+      // Soft delete: the intent's state='deleted'; the deletion reason lives on the separate delete_reason field.
       const deleted = node.state === "deleted";
       const deleteReason = node.delete_reason ?? "";
       if (node.payload) {
@@ -1280,8 +1280,8 @@ export function SessionsTab({ taskId }: { taskId: string }) {
   const activeSettled =
     !!activeLast && (activeLast.kind === "result" || (activeLast.kind === "text" && activeLast.is_error));
   const mainBusy = isMain && (sending || (!activeSettled && (mainChatRunning ?? recentLive(activeKey))));
-  // 折叠态（手机端）标题栏要替代整张列表：显示当前会话名 + 其它会话的未读合计，
-  // 否则收起后既不知道自己在看哪个会话，也看不到别处有新消息。
+  // In the collapsed state (mobile) the title bar replaces the whole list: it shows the current session name + the total unread of other sessions,
+  // otherwise once collapsed you neither know which session you are viewing nor see new messages elsewhere.
   const activeDisplayTitle = (active.role === "worker" ? sessionMeta.get(active.id)?.title : "") || active.title;
   const hiddenUnread = React.useMemo(
     () => Object.entries(store).reduce((sum, [key, s]) => (key === activeKey ? sum : sum + s.unread), 0),
@@ -1513,7 +1513,7 @@ export function SessionsTab({ taskId }: { taskId: string }) {
       .catch((e) => {
         setInput(text); // restore so the user doesn't lose their text / attachments
         setAttachments(atts);
-        toast.error(`Failed to send:${(e as Error).message || "Please try again later"}`);
+        toast.error(`Send failed: ${(e as Error).message || "please retry later"}`);
       })
       .finally(() => setSending(false));
   }
@@ -1524,7 +1524,7 @@ export function SessionsTab({ taskId }: { taskId: string }) {
     if (side.handleCommand(message, () => setWorkerMessage(""))) return;
     if (!intentId || active.inherited || active.status !== "paused" || workerMessageSending || !message) return;
     if (workerMessageCharCount(message) > MAX_WORKER_MESSAGE_CHARS) {
-      toast.error(`Message length limit: ${MAX_WORKER_MESSAGE_CHARS} characters`);
+      toast.error(`Messages cannot exceed ${MAX_WORKER_MESSAGE_CHARS} characters`);
       return;
     }
     const requestId = workerMessageRequestId || newWorkerMessageRequestID();
@@ -1538,16 +1538,16 @@ export function SessionsTab({ taskId }: { taskId: string }) {
         patchIntentState(intentId, result.state);
         setWorkerMessage("");
         setWorkerMessageRequestId("");
-        toast.success(`Message sent to Worker#${intentId}Continue immediately.`);
+        toast.success(`Message sent to Worker #${intentId}; execution resumed immediately`);
       })
       .catch((error) => {
-        toast.error(`Failed to send:${(error as Error).message || "Please try again later"}`);
+        toast.error(`Send failed: ${(error as Error).message || "please retry later"}`);
       })
       .finally(() => setWorkerMessageSending(false));
   }
 
   const mainLoaded = !!store[currentMainKey]?.loaded;
-  // 发送键位由系统设置决定（localStorage），默认 Enter 发送。
+  // The send key is decided by system settings (localStorage); Enter sends by default.
   const sendMode = useChatSendMode();
   // What the transcript pane should show for the active session.
   const showLoader = !activeState || (activeState.loading && !activeState.loaded);
@@ -1563,9 +1563,9 @@ export function SessionsTab({ taskId }: { taskId: string }) {
 
   return (
     <TooltipProvider delayDuration={300}>
-      {/* 高度预留：页面头部（标题行 + 目标 + Tabs ≈ 7.5rem）+ 内容内边距。手机端 p-4、
-        桌面端 lg:p-6，且桌面还要留出滚动余量，所以两档分别预留 10rem / 13rem —— 手机端
-        沿用 13rem 会白白吃掉 3rem 的记录高度。 */}
+      {/* Height reserve: page header (title row + goal + Tabs ≈ 7.5rem) + content padding. Mobile p-4,
+        desktop lg:p-6, and desktop also needs scroll headroom, so the two tiers reserve 10rem / 13rem respectively — mobile
+        reusing 13rem would waste 3rem of transcript height. */}
       <div
         className={cn(
           "grid h-[calc(100svh-10rem)] min-h-0 grid-cols-1 gap-4",
@@ -1587,7 +1587,7 @@ export function SessionsTab({ taskId }: { taskId: string }) {
                 <ChevronDownIcon
                   className={cn("size-3.5 shrink-0 transition-transform lg:hidden", !listOpen && "-rotate-90")}
                 />
-                <span className="shrink-0">Session List</span>
+                <span className="shrink-0">Sessions</span>
                 {!listOpen && (
                   <>
                     <span className="min-w-0 truncate text-foreground lg:hidden" title={activeDisplayTitle}>
@@ -1607,7 +1607,7 @@ export function SessionsTab({ taskId }: { taskId: string }) {
                     "inline-flex items-center gap-1 text-[10px]",
                     sseLive ? "text-emerald-500" : "text-amber-500",
                   )}
-                  title={sseLive ? "Live connection active" : "Real-time connection is broken and reconnecting automatically (historical still visible)"}
+                  title={sseLive ? "Live connection healthy" : "Live connection lost, reconnecting automatically (history still visible)"}
                 >
                   {sseLive ? (
                     <>
@@ -1638,7 +1638,7 @@ export function SessionsTab({ taskId }: { taskId: string }) {
                 </TooltipTrigger>
                 <TooltipContent>
                   Input {taskTokens.input_tokens.toLocaleString()} · Output {taskTokens.output_tokens.toLocaleString()} ·
-                  Cache Read {taskTokens.cache_read_tokens.toLocaleString()} · Cache write{" "}
+                  Cache read {taskTokens.cache_read_tokens.toLocaleString()} · Cache write{" "}
                   {taskTokens.cache_write_tokens.toLocaleString()}
                 </TooltipContent>
               </Tooltip>
@@ -1667,8 +1667,8 @@ export function SessionsTab({ taskId }: { taskId: string }) {
                           type="button"
                           onClick={() => setConfirmNewMain(true)}
                           disabled={creatingMain}
-                          title={"New Main Agent Session (empty context, job status reserved)"}
-                          aria-label={"New primary agent session"}
+                          title="New main agent session (clears context, task state preserved)"
+                          aria-label="New main agent session"
                           className="ml-auto flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] text-muted-foreground hover:bg-accent/60 hover:text-foreground disabled:opacity-50"
                         >
                           {creatingMain ? (
@@ -1693,7 +1693,7 @@ export function SessionsTab({ taskId }: { taskId: string }) {
                           onClick={() => {
                             approvalFocus.close();
                             setActiveId(s.id);
-                            setListOpen(false); // 手机端选完即收起，把高度还给会话记录
+                            setListOpen(false); // on mobile, collapse after picking to give the height back to the transcript
                             setWorkerMessage("");
                             setWorkerMessageRequestId("");
                           }}
@@ -1717,14 +1717,14 @@ export function SessionsTab({ taskId }: { taskId: string }) {
                         ) : (
                           <RotateCwIcon className="size-3.5" />
                         )}
-                        Loading earlier
+                        Load earlier workers
                       </button>
                     )}
                   </div>
                 );
               })}
               {mainLoaded && !workerSessions.length && (
-                <div className="px-2 py-1 text-xs text-muted-foreground">There are no active Worker sessions.</div>
+                <div className="px-2 py-1 text-xs text-muted-foreground">No running worker sessions.</div>
               )}
             </div>
           </ScrollArea>
@@ -1742,7 +1742,7 @@ export function SessionsTab({ taskId }: { taskId: string }) {
                 const meta = isWorker ? sessionMeta.get(active.id) : undefined;
                 // Worker: the intent moved into the transcript as a message, so the
                 // header shows a stable generic label (intent JSON stays on hover).
-                const title = isWorker ? "Worker session" : active.title;
+                const title = isWorker ? "Worker execution session" : active.title;
                 const titleEl = <span className="min-w-0 truncate text-sm font-medium">{title}</span>;
                 return meta?.json ? (
                   <Tooltip>
@@ -1763,7 +1763,7 @@ export function SessionsTab({ taskId }: { taskId: string }) {
                       variant="outline"
                       className="max-w-28 shrink-0 font-normal"
                       aria-label={
-                        activeResolution.available ? `Current configuration:${resolutionLabel(activeResolution)}` : "Model unavailable"
+                        activeResolution.available ? `Current config: ${resolutionLabel(activeResolution)}` : "Model unavailable"
                       }
                     >
                       <span className="truncate">
@@ -1774,13 +1774,13 @@ export function SessionsTab({ taskId }: { taskId: string }) {
                   <TooltipContent side="bottom" className="max-w-xs [overflow-wrap:anywhere]">
                     {activeResolution.available
                       ? [resolutionLabel(activeResolution), activeResolution.model].filter(Boolean).join(" / ")
-                      : activeResolution.reason || "No LLM configuration available"}
+                      : activeResolution.reason || "No available LLM config"}
                   </TooltipContent>
                 </Tooltip>
               )}
               {activeAssets && activeAssets.length > 0 && <WorkerAssetBadge assets={activeAssets} />}
               {active.inherited && active.source_task_id && (
-                <Badge variant="outline">Source task #{active.source_task_id} • History-only</Badge>
+                <Badge variant="outline">Source task #{active.source_task_id} · read-only history</Badge>
               )}
               {active.live && (
                 <span className="inline-flex items-center gap-1 rounded bg-blue-500/15 px-1.5 py-0.5 text-[10px] font-medium text-blue-600 dark:text-blue-400">
@@ -1789,14 +1789,14 @@ export function SessionsTab({ taskId }: { taskId: string }) {
                 </span>
               )}
               {activeState?.hasMore && (
-                <span className="text-[10px] text-muted-foreground" title={"Scroll up and load older history"}>
-                  Early history.
+                <span className="text-[10px] text-muted-foreground" title="Scroll up to load earlier history">
+                  ↑ Earlier history
                 </span>
               )}
               <div className="ml-auto flex min-w-0 max-w-full items-center justify-end gap-x-3 gap-y-1 text-xs text-muted-foreground max-sm:w-full max-sm:flex-wrap">
                 {tokenTotal.any && (
                   <Tooltip>
-                    {/* 手机端用短标签（入/缓/出）：长标签会把这一行撑成两行，进一步压缩记录区。 */}
+                    {/* Mobile uses short labels (In/Cache/Out): long labels wrap this row onto two lines, further squeezing the transcript. */}
                     <TooltipTrigger asChild>
                       <span className="inline-flex min-w-0 items-center">
                         <TokenMetrics
@@ -1817,14 +1817,14 @@ export function SessionsTab({ taskId }: { taskId: string }) {
                     </TooltipTrigger>
                     <TooltipContent>
                       Input {activeTokens.input_tokens.toLocaleString()} · Output{" "}
-                      {activeTokens.output_tokens.toLocaleString()} • Cache reading{" "}
+                      {activeTokens.output_tokens.toLocaleString()} · Cache read{" "}
                       {activeTokens.cache_read_tokens.toLocaleString()} · Cache write{" "}
                       {activeTokens.cache_write_tokens.toLocaleString()}
                     </TooltipContent>
                   </Tooltip>
                 )}
                 {runDuration != null && (
-                  <span className="inline-flex items-center gap-1" title={"Run long (first & last )"}>
+                  <span className="inline-flex items-center gap-1" title="Run duration (first step → last step)">
                     <ClockIcon className="size-3" />
                     {fmtDuration(runDuration)}
                   </span>
@@ -1839,13 +1839,13 @@ export function SessionsTab({ taskId }: { taskId: string }) {
                 <div className="flex items-start gap-2 border-b border-destructive/30 bg-destructive/5 px-4 py-2.5 text-xs">
                   <Trash2Icon className="mt-0.5 size-3.5 shrink-0 text-destructive" />
                   <div className="min-w-0">
-                    <span className="font-medium text-destructive">This intention has been deleted by the user</span>
+                    <span className="font-medium text-destructive">This intent was deleted by the user</span>
                     <span className="text-muted-foreground">
-                      (The execution has been discontinued and the planners have received notification; intent and output are retained and history can be viewed below)
+                      (execution stopped and the planner notified; the intent and its output are kept — view the history below)
                     </span>
                     {dm.deleteReason && (
                       <p className="mt-1 break-words text-foreground">
-                        <span className="text-muted-foreground">Reason for deletion:</span>
+                        <span className="text-muted-foreground">Deletion reason: </span>
                         {dm.deleteReason}
                       </p>
                     )}
@@ -1872,18 +1872,18 @@ export function SessionsTab({ taskId }: { taskId: string }) {
                 {activeState?.loadingMore && (
                   <div className="flex items-center justify-center gap-2 pb-2 text-xs text-muted-foreground">
                     <Loader2Icon className="size-3.5 animate-spin" />
-                    Loading earlier history...
+                    Loading earlier history…
                   </div>
                 )}
                 {showLoader ? (
                   <div className="flex items-center gap-2 pl-9 text-xs text-muted-foreground">
                     <Loader2Icon className="size-3.5 animate-spin" />
-                    Load Active Flows...
+                    Loading activity stream…
                   </div>
                 ) : activeState?.error ? (
                   <div className="flex items-center gap-2 pl-9 text-xs text-red-500">
                     <CircleXIcon className="size-3.5" />
-                    Loading failed:{activeState.error}
+                    Failed to load: {activeState.error}
                     <Button
                       size="sm"
                       variant="ghost"
@@ -1903,7 +1903,7 @@ export function SessionsTab({ taskId }: { taskId: string }) {
                   />
                 ) : (
                   <div className="pl-9 text-xs text-muted-foreground">
-                    {isMain ? "There is no dialogue. Send the message to the main Agent below to guide the search direction or the intervention process." : "There is no record of activities."}
+                    {isMain ? "No conversation yet. Message the main agent below to steer exploration or step into the flow." : "No activity records."}
                   </div>
                 )}
               </div>
@@ -1925,7 +1925,7 @@ export function SessionsTab({ taskId }: { taskId: string }) {
                           type="button"
                           className="ml-0.5 text-muted-foreground hover:text-foreground"
                           onClick={() => setAttachments((p) => p.filter((x) => x.path !== a.path))}
-                          title={"Remove"}
+                          title="Remove"
                         >
                           <XIcon className="size-3" />
                         </button>
@@ -1944,9 +1944,9 @@ export function SessionsTab({ taskId }: { taskId: string }) {
                   <MentionTextarea
                     inputGroup
                     rows={1}
-                    aria-label={"Message the primary agent"}
+                    aria-label="Message the main agent"
                     placeholder={
-                      mainBusy ? "The main Agent is running and can enter /btw questions..." : "Send message to main Agent, @quote bugs, assets, etc...."
+                      mainBusy ? "The main agent is running; type /btw to ask a side question…" : "Message the main agent; @ to reference findings, assets, and more…"
                     }
                     value={input}
                     disabled={sending}
@@ -1964,13 +1964,13 @@ export function SessionsTab({ taskId }: { taskId: string }) {
                       variant="ghost"
                       onClick={() => fileInputRef.current?.click()}
                       disabled={mainBusy || uploading}
-                      title={"Upload file"}
-                      aria-label={"Upload file"}
+                      title="Upload file"
+                      aria-label="Upload file"
                     >
                       {uploading ? <Loader2Icon className="animate-spin" /> : <PaperclipIcon />}
                     </InputGroupButton>
                     {mainBusy && isBtwCommand(input) && (
-                      <InputGroupButton size="icon-xs" onClick={send} aria-label={"Ask a side question"}>
+                      <InputGroupButton size="icon-xs" onClick={send} aria-label="Send side question">
                         <ArrowUpIcon />
                       </InputGroupButton>
                     )}
@@ -1981,8 +1981,8 @@ export function SessionsTab({ taskId }: { taskId: string }) {
                         variant="destructive"
                         onClick={stop}
                         disabled={stopping}
-                        title={"Stop current execution"}
-                        aria-label={"Stop current execution"}
+                        title="Stop current execution"
+                        aria-label="Stop current execution"
                       >
                         {stopping ? <Loader2Icon className="animate-spin" /> : <SquareIcon />}
                       </InputGroupButton>
@@ -1993,8 +1993,8 @@ export function SessionsTab({ taskId }: { taskId: string }) {
                         variant="default"
                         onClick={send}
                         disabled={(!input.trim() && attachments.length === 0) || sending}
-                        title={"Send message"}
-                        aria-label={"Send message"}
+                        title="Send message"
+                        aria-label="Send message"
                       >
                         {sending ? <Loader2Icon className="animate-spin" /> : <ArrowUpIcon />}
                       </InputGroupButton>
@@ -2010,8 +2010,8 @@ export function SessionsTab({ taskId }: { taskId: string }) {
                   <MentionTextarea
                     inputGroup
                     rows={1}
-                    aria-label={`Message worker #${active.intent_id} Send Message`}
-                    placeholder={`Message worker #${active.intent_id} Send messages, @Refer to logs, reorienting execution...`}
+                    aria-label={`Message Worker #${active.intent_id}`}
+                    placeholder={`Message Worker #${active.intent_id}; @ to reference records and adjust execution direction…`}
                     value={workerMessage}
                     onValueChange={(value) => {
                       setWorkerMessage(value);
@@ -2036,7 +2036,7 @@ export function SessionsTab({ taskId }: { taskId: string }) {
                       {workerMessageCharCount(workerMessage)}/{MAX_WORKER_MESSAGE_CHARS}
                     </span>
                     {active.status === "running" && isBtwCommand(workerMessage) && (
-                      <InputGroupButton size="icon-xs" onClick={sendWorkerChat} aria-label={"Ask a side question"}>
+                      <InputGroupButton size="icon-xs" onClick={sendWorkerChat} aria-label="Send side question">
                         <ArrowUpIcon />
                       </InputGroupButton>
                     )}
@@ -2047,8 +2047,8 @@ export function SessionsTab({ taskId }: { taskId: string }) {
                         variant="destructive"
                         onClick={() => void controlWorker(active, "pause")}
                         disabled={controllingIntent === active.intent_id}
-                        title={"Pause this worker"}
-                        aria-label={"Pause this worker"}
+                        title="Pause current worker"
+                        aria-label="Pause current worker"
                       >
                         {controllingIntent === active.intent_id ? (
                           <Loader2Icon className="animate-spin" />
@@ -2064,13 +2064,13 @@ export function SessionsTab({ taskId }: { taskId: string }) {
                           variant="ghost"
                           onClick={() => void controlWorker(active, "resume")}
                           disabled={controllingIntent === active.intent_id || workerMessageSending}
-                          title={"No message, go straight ahead."}
-                          aria-label={"Resume execution"}
+                          title="Continue execution directly without sending a message"
+                          aria-label="Continue execution directly"
                         >
                           {controllingIntent === active.intent_id ? (
                             <Loader2Icon className="animate-spin" />
                           ) : (
-                            "Resume"
+                            "Continue directly"
                           )}
                         </InputGroupButton>
                         <InputGroupButton
@@ -2082,8 +2082,8 @@ export function SessionsTab({ taskId }: { taskId: string }) {
                             !workerMessage.trim() ||
                             workerMessageCharCount(workerMessage) > MAX_WORKER_MESSAGE_CHARS
                           }
-                          title={"Send message"}
-                          aria-label={"Send message"}
+                          title="Send message"
+                          aria-label="Send message"
                         >
                           {workerMessageSending ? <Spinner /> : <ArrowUpIcon />}
                         </InputGroupButton>
@@ -2114,18 +2114,18 @@ export function SessionsTab({ taskId }: { taskId: string }) {
         >
           <AlertDialogContent className="max-w-[min(32rem,calc(100vw-2rem))]">
             <AlertDialogHeader>
-              <AlertDialogTitle>Delete Worker#{cancelIntent?.intent_id}？</AlertDialogTitle>
+              <AlertDialogTitle>Delete Worker #{cancelIntent?.intent_id}?</AlertDialogTitle>
               <AlertDialogDescription className="break-words whitespace-normal">
                 {deleteMode === "hard" ? (
                   <>
-                    <strong>Permanent deletion</strong>Will physically remove the intention, and<strong>It's the only thing that holds it.</strong>
-                    The downstream node (cading to leaves leaves no isolated data); the sharing of nodes, objectives and mission roots will be preserved.
-                    <strong>This operation cannot be restored.</strong>The planners will be notified of the deletion and reprogrammed accordingly.
+                    <strong>Hard delete</strong> physically removes this intent and the downstream nodes <strong>supported solely by it</strong>
+                    (cascading to the leaves to avoid orphaned data); shared nodes, goals, and the task's root facts are kept.
+                    <strong>This action is irreversible.</strong> The planner is notified of the deletion and re-plans accordingly.
                   </>
                 ) : (
                   <>
-                    <strong>Soft deletion</strong>The intention is to "delete" and to record the reason for the deletion, the intention node, the execution record,
-                    Registered facts and loopholes<strong>will be retained</strong>. The planner will receive an "intent to delete + reason" and reprogramme it accordingly.
+                    <strong>Soft delete</strong> marks the intent as "deleted" and records the reason; the intent node, execution records,
+                    registered facts, and findings <strong>are all kept</strong>. The planner receives "intent deleted by user + reason" and re-plans accordingly.
                   </>
                 )}
               </AlertDialogDescription>
@@ -2140,8 +2140,8 @@ export function SessionsTab({ taskId }: { taskId: string }) {
                     deleteMode === "soft" ? "border-primary bg-primary/5" : "hover:bg-accent",
                   )}
                 >
-                  <div className="font-medium">Soft deletion</div>
-                  <div className="text-xs text-muted-foreground">Retain data and history</div>
+                  <div className="font-medium">Soft delete</div>
+                  <div className="text-xs text-muted-foreground">Data kept, traceable</div>
                 </button>
                 <button
                   type="button"
@@ -2151,19 +2151,19 @@ export function SessionsTab({ taskId }: { taskId: string }) {
                     deleteMode === "hard" ? "border-destructive bg-destructive/5" : "hover:bg-accent",
                   )}
                 >
-                  <div className="font-medium">Permanent deletion</div>
-                  <div className="text-xs text-muted-foreground">Delete dependent records permanently</div>
+                  <div className="font-medium">Hard delete</div>
+                  <div className="text-xs text-muted-foreground">Cascade removal, irreversible</div>
                 </button>
               </div>
               <div className="grid gap-2">
                 <label htmlFor="cancel-reason" className="text-sm font-medium">
-                  Reason for deletion (must be filled)
+                  Deletion reason (required)
                 </label>
                 <Textarea
                   id="cancel-reason"
                   value={cancelReason}
                   onChange={(e) => setCancelReason(e.target.value)}
-                  placeholder={"Explain why this intention was deleted, e. g. error of direction / target is invalid / repeats other intentions..."}
+                  placeholder="Explain why this intent is being deleted, e.g. wrong direction / goal obsolete / duplicate of another intent…"
                   rows={3}
                   autoFocus
                 />
@@ -2177,7 +2177,7 @@ export function SessionsTab({ taskId }: { taskId: string }) {
                 onClick={() => cancelIntent && void controlWorker(cancelIntent, "cancel", cancelReason, deleteMode)}
               >
                 {controllingIntent ? <Loader2Icon className="animate-spin" /> : <Trash2Icon />}
-                {deleteMode === "hard" ? "Delete completely" : "Confirm deletion"}
+                {deleteMode === "hard" ? "Delete permanently" : "Confirm delete"}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -2188,13 +2188,13 @@ export function SessionsTab({ taskId }: { taskId: string }) {
             <AlertDialogHeader>
               <AlertDialogTitle>Start a new session?</AlertDialogTitle>
               <AlertDialogDescription className="break-words whitespace-normal">
-                The current session will be archived (at any time) and the main Agent will continue with a clean context. The task profile, assets, and targets will not be affected.
+                The current session will be archived (you can switch back anytime) and the main agent continues with a clean context. The task's graph, assets, and goals are unaffected.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel disabled={creatingMain}>Cancel</AlertDialogCancel>
               <AlertDialogAction disabled={creatingMain} onClick={() => void createMainSession()}>
-                {creatingMain ? "Opening..." : "Open New Session"}
+                {creatingMain ? "Starting…" : "Start new session"}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

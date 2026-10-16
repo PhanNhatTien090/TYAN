@@ -14,6 +14,11 @@ Thông tin tác giả và những người đóng góp cho ARTEX được giữ 
 
 > **Chỉ dành cho học tập và nghiên cứu bảo mật trong môi trường cục bộ cô lập. Nghiêm cấm sử dụng TYAN để vi phạm pháp luật, truy cập trái phép, đánh cắp dữ liệu, làm gián đoạn dịch vụ hoặc gây hại cho người khác.** Việc cài đặt hay sở hữu công cụ không tạo ra quyền truy cập bất kỳ hệ thống nào. Đồng thời phải tuân thủ điều khoản gốc bên dưới, bao gồm việc không kiểm thử thực tế trên hệ thống trực tuyến hoặc nối mạng, kể cả khi sở hữu hay được cho phép.
 
+## Các chức năng lab bổ sung
+
+Đã bổ sung lịch tác vụ, finding cases, credentials mã hóa, hỏi người vận hành, lớp access gate và extension capture metadata cho lab. Xem [vị trí chức năng, cấu hình và lưu ý nâng cấp](FEATURES.md) trước khi dùng. Giữ nguyên toàn bộ giới hạn sử dụng hiện tại.
+
+
 ## Hình ảnh giao diện
 
 ![Dashboard TYAN với dữ liệu mẫu](screenshots/tyan-dashboard.png)

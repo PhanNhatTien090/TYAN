@@ -32,32 +32,32 @@ import { cn } from "@/lib/utils";
 
 import { ProfileRetryFields, RetryPolicyPanel, ZERO_OVERRIDE } from "./_components/retry";
 
-// 思考开关(thinking.type)与思考强度(reasoning_effort)是两个【互相独立】的字段，
-// 各自单独设置——有些接口没有 thinking 字段、只靠强度参数就能激活思考，故需解耦。
-// 存库空字符串 = 该字段【不发送】；Radix Select 不接受空 value，故 UI 用 "none"
-// 哨兵表示不发送，存取时与 "" 互转（NONE / fromStore / toStore）。
+// The thinking switch (thinking.type) and the thinking effort (reasoning_effort) are two [independent] fields,
+// each set on its own — some APIs have no thinking field and activate thinking via the effort parameter alone, hence the decoupling.
+// An empty string in storage = the field is [not sent]; Radix Select rejects an empty value, so the UI uses "none"
+// as the sentinel for not sent, converted to and from "" on load and save (NONE / fromStore / toStore).
 const NONE = "none";
 const fromStore = (v?: string) => (v ? v : NONE);
 const toStore = (v: string) => (v === NONE ? "" : v);
 const THINKING_TYPES: { value: string; label: string }[] = [
-  { value: NONE, label: "Do not send (default)" },
-  { value: "disabled", label: "Close" },
-  { value: "enabled", label: "Enable" },
+  { value: NONE, label: "Not sent (default)" },
+  { value: "disabled", label: "Disabled" },
+  { value: "enabled", label: "Enabled" },
 ];
-// 输出上限用哪个请求字段名（仅 openai 格式有意义）。NONE ↔ "" 走同一套哨兵转换。
+// Which request field name carries the output cap (only meaningful for the openai format). NONE ↔ "" shares the same sentinel conversion.
 const MAX_TOKENS_FIELDS: { value: string; label: string }[] = [
   { value: NONE, label: "max_tokens (default)" },
   { value: "max_completion_tokens", label: "max_completion_tokens" },
 ];
-// 另外两种格式各自定死了字段名，选项对它们无意义，说明文案里直接讲清楚。
+// The other two formats hard-code their field names, so the option is meaningless for them; the hint texts spell this out.
 const MAX_TOKENS_FIELD_HINTS: Record<string, string> = {
   openai:
-    "Output token-limit field. Most compatible gateways use max_tokens; select max_completion_tokens for endpoints that require it. Sending the wrong field may return unsupported_parameter.",
-  anthropic: "Only in openai format is optional. Anthropic field name is fixed to max_tokens.",
-  "openai-responses": "Only in openai format is optional. The field name for Responses API is fixed to max_output_tokens.",
+    "Which key carries the cap. max_tokens is the default and the vast majority of compatible gateways only accept it; OpenAI's official reasoning models (the o series / GPT-5) conversely only accept max_completion_tokens and fail outright with unsupported_parameter when they receive max_tokens.",
+  anthropic: "Only selectable for the openai format. Anthropic's field name is fixed as max_tokens.",
+  "openai-responses": "Only selectable for the openai format. The Responses API's field name is fixed as max_output_tokens.",
 };
 const EFFORT_LEVELS: { value: string; label: string }[] = [
-  { value: NONE, label: "Do not send (default)" },
+  { value: NONE, label: "Not sent (default)" },
   { value: "low", label: "low" },
   { value: "medium", label: "medium" },
   { value: "high", label: "high" },
@@ -71,36 +71,36 @@ function cooldownText(secs: number) {
   return `${Math.ceil(secs / 60)}min`;
 }
 
-// 一个配置在卡片上显示的「是否正常」。没填 Key 的配置根本发不出请求，比熔断更该先说；
-// 其余状态来自轮询的熔断记录（轮询关着时不会产生新记录，此时「正常」= 没有已知故障）。
+// The "healthy or not" badge a profile shows on its card. A profile without a Key cannot send any request at all — say that before the breaker;
+// the other states come from the pool's breaker records (with polling off no new records appear, so "healthy" = no known failure).
 type Health = { label: string; cls: string; hint?: string };
 function healthOf(p: LLMProfile, m?: LLMPoolMember): Health {
   if (!p.api_key_hint) {
     return {
-      label: "Unconfigured Key",
+      label: "No Key configured",
       cls: "border-muted-foreground/40 text-muted-foreground",
-      hint: "Unfilled API Key, Unable to call",
+      hint: "No API Key set; cannot be called",
     };
   }
   if (m?.state === "tripped") {
     return {
-      label: m.cooldown_secs > 0 ? `Circuit open · ${cooldownText(m.cooldown_secs)}` : "Circuit open",
+      label: m.cooldown_secs > 0 ? `Tripped · ${cooldownText(m.cooldown_secs)}` : "Tripped",
       cls: "border-destructive/50 text-destructive",
       hint: m.last_error,
     };
   }
   if (m?.state === "degraded") {
     return {
-      label: `Unusual. Failure. ${m.fails} times`,
+      label: `Degraded · failed ${m.fails} times`,
       cls: "border-amber-500/50 text-amber-600 dark:text-amber-400",
       hint: m.last_error,
     };
   }
-  return { label: "Normal", cls: "border-emerald-500/50 text-emerald-600 dark:text-emerald-400" };
+  return { label: "Healthy", cls: "border-emerald-500/50 text-emerald-600 dark:text-emerald-400" };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 轮询配置抽屉
+// Pool settings drawer
 // ─────────────────────────────────────────────────────────────────────────────
 
 function PoolSheet({
@@ -116,7 +116,7 @@ function PoolSheet({
 }) {
   const [busy, setBusy] = React.useState(false);
 
-  // 冷却倒计时是后端算出的剩余秒数——抽屉开着且有配置不正常时才定时拉，让它走起来。
+  // The cooldown countdown is the remaining seconds computed by the backend — fetched on a timer only while the drawer is open and some profile is unhealthy, to keep it ticking.
   React.useEffect(() => {
     if (!open || !pool?.enabled || !pool.chain.some((m) => m.state !== "ok")) return;
     const t = setInterval(() => void onReload(), 10_000);
@@ -130,12 +130,12 @@ function PoolSheet({
       await api.setSettings(patch);
       await onReload();
       if (patch.llm_pool_enabled !== undefined) {
-        toast.success(patch.llm_pool_enabled ? "LLM rotation enabled" : "LLM rotation disabled");
+        toast.success(patch.llm_pool_enabled ? "LLM pool enabled" : "LLM pool disabled");
       } else {
         toast.success("Fallback settings updated");
       }
     } catch (e) {
-      toast.error(`Setup failed:${(e as Error).message}`);
+      toast.error(`Failed to apply settings: ${(e as Error).message}`);
     } finally {
       setBusy(false);
     }
@@ -145,15 +145,15 @@ function PoolSheet({
     try {
       await api.resetLLMPool(id);
       await onReload();
-      toast.success(id ? "The configuration has been restored" : "Full configuration restored");
+      toast.success(id ? "Profile recovered" : "All profiles recovered");
     } catch (e) {
-      toast.error(`Restore failed:${(e as Error).message}`);
+      toast.error(`Recovery failed: ${(e as Error).message}`);
     }
   }
 
   const enabled = pool?.enabled ?? false;
   const chain = pool?.chain ?? [];
-  // 参与轮询的成员（排除被标记「不参与轮询」的），顺序即后端实际的尝试顺序。
+  // Members taking part in the pool (excluding those flagged "excluded from pool"), in the exact order the backend tries them.
   const inChain = chain.filter((m) => m.active || !m.excluded);
   const tripped = chain.filter((m) => m.state === "tripped");
 
@@ -162,25 +162,25 @@ function PoolSheet({
       <SheetContent side="right" className="flex flex-col gap-0 p-0 data-[side=right]:sm:max-w-lg">
         <SheetHeader className="px-4">
           <SheetTitle className="flex items-center gap-2">
-            <ZapIcon className="size-4" /> LLM Query Query Quest Quest Quest Quest Quest Quest
+            <ZapIcon className="size-4" /> LLM Pool · Failover
           </SheetTitle>
           <SheetDescription>
-            After it was opened,<b>No model specified</b>Agent is not currently configured (less than balance / Key invalid / restricted flow /
-            Autocuts to the next configuration when the service is abnormal.
+            When enabled, an Agent <b>without a pinned model</b> automatically fails over to the next config when the current one is unusable (insufficient balance / dead Key / rate limiting /
+            service error).
           </SheetDescription>
         </SheetHeader>
 
         <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4 pb-6">
           <div className="flex items-center justify-between gap-4 rounded-lg border p-3">
             <div className="grid gap-0.5">
-              <Label className="text-sm">Enable rotation</Label>
-              <p className="text-muted-foreground text-xs">Default closes. Closes always using only active configuration, failure is failure.</p>
+              <Label className="text-sm">Enable pool</Label>
+              <p className="text-muted-foreground text-xs">Off by default. When off, only the active profile is ever used and a failure stays a failure.</p>
             </div>
             <Switch
               checked={enabled}
               disabled={busy}
               onCheckedChange={(v) => void toggle({ llm_pool_enabled: v })}
-              aria-label={"LLM rotation"}
+              aria-label="LLM pool toggle"
             />
           </div>
 
@@ -188,17 +188,17 @@ function PoolSheet({
             <>
               <div className="flex items-center justify-between gap-4 rounded-lg border p-3">
                 <div className="grid gap-0.5">
-                  <Label className="text-sm">Even when the specified model fails.</Label>
+                  <Label className="text-sm">Also fall back when a pinned config fails</Label>
                   <p className="text-muted-foreground text-xs">
-                    Default closes: Agent or task assigns a configuration to use it alone, failure is failure (no other model will be changed quietly).
-                    When you open, the specified configuration fails and goes back to the next Query Chain.
+                    Off by default: when an Agent or task pins a config, only that config is used and a failure stays a failure (no silent switch to another model).
+                    When enabled, a failing pinned config also falls back to the pool chain below.
                   </p>
                 </div>
                 <Switch
                   checked={pool?.bind_fallback ?? false}
                   disabled={busy}
                   onCheckedChange={(v) => void toggle({ llm_pool_bind_fallback: v })}
-                  aria-label={"Fallback on assigned configuration failure"}
+                  aria-label="Bound-config failure fallback toggle"
                 />
               </div>
 
@@ -206,16 +206,16 @@ function PoolSheet({
 
               <div className="grid gap-2">
                 <div className="flex items-center justify-between">
-                  <Label className="text-sm">Rotation order</Label>
+                  <Label className="text-sm">Pool order</Label>
                   {tripped.length > 0 && (
                     <Button size="sm" variant="ghost" onClick={() => void recover()}>
-                      <RotateCcwIcon /> Restore All
+                      <RotateCcwIcon /> Recover all
                     </Button>
                   )}
                 </div>
                 {inChain.length < 2 && (
                   <p className="text-muted-foreground text-xs">
-                    Currently only {inChain.length} An available configuration will not take effect for the round of queries - at least 2 filled API Key and participate in the round of queries will be required.
+                    Only {inChain.length} usable profile(s) right now, so the pool has no effect — at least 2 profiles with an API Key set and pool participation are required.
                   </p>
                 )}
                 {chain.map((m) => {
@@ -237,24 +237,24 @@ function PoolSheet({
                         <span className="font-medium">{m.name}</span>
                         {m.active && (
                           <Badge variant="outline" className="border-amber-400/50 text-amber-500">
-                            Activate
+                            Active
                           </Badge>
                         )}
-                        {excluded && <Badge variant="outline">Excluded from polling</Badge>}
+                        {excluded && <Badge variant="outline">Excluded from pool</Badge>}
                         <div className="ml-auto flex items-center gap-2">
                           {m.state === "tripped" && m.cooldown_secs > 0 && (
                             <span className="text-muted-foreground text-xs">Cooldown {cooldownText(m.cooldown_secs)}</span>
                           )}
                           {m.state === "degraded" && (
-                            <span className="text-muted-foreground text-xs">Continuous failure {m.fails} times</span>
+                            <span className="text-muted-foreground text-xs">{m.fails} consecutive failures</span>
                           )}
                           {m.state !== "ok" && (
                             <Button
                               size="icon"
                               variant="ghost"
                               className="size-7"
-                              aria-label={"Restore now."}
-                              title={"Restore now: clear the melting and retry the configuration next time called"}
+                              aria-label="Recover now"
+                              title="Recover now: clears the breaker so the next call retries this profile"
                               onClick={() => void recover(m.profile_id)}
                             >
                               <RotateCcwIcon className="size-3.5" />
@@ -276,15 +276,15 @@ function PoolSheet({
                 })}
                 {chain.length === 0 && (
                   <div className="rounded-lg border border-dashed p-4 text-center text-muted-foreground text-sm">
-                    No configurations yet
+                    No profiles yet
                   </div>
                 )}
               </div>
 
               <div className="rounded-lg border border-dashed p-3 text-muted-foreground text-xs leading-relaxed">
-                Activate the configuration constant to 1 indent, with the rest being prioritized from high to low (set in configurations). After a configuration fails, it cools (60s  ⁇ 5min  ⁇ )
-                30min), skipped during cooling and automatically cut back when restored. The context window does not contain the configuration of the current request. Agent of the model is specified
-                Do not participate in the rounding with the task by default.
+                The active profile is always first; the rest follow priority from high to low (set per profile). After a failure a profile enters a cooldown (60s → 5min →
+                30min), is skipped while cooling down, and switches back automatically once recovered. Profiles whose context window cannot fit the current request are skipped. Agents
+                and tasks with a pinned model do not join the pool by default.
               </div>
             </>
           )}
@@ -295,7 +295,7 @@ function PoolSheet({
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 模型配置抽屉（新建 / 编辑共用同一套表单）
+// Model profile drawer (create / edit share the same form)
 // ─────────────────────────────────────────────────────────────────────────────
 
 function ProfileSheet({
@@ -304,7 +304,7 @@ function ProfileSheet({
   onOpenChange,
   onSaved,
 }: {
-  profile: LLMProfile | null; // null = 新建
+  profile: LLMProfile | null; // null = create
   open: boolean;
   onOpenChange: (o: boolean) => void;
   onSaved: (id: string) => void;
@@ -319,24 +319,24 @@ function ProfileSheet({
   const [keyHint, setKeyHint] = React.useState("");
   const [rps, setRps] = React.useState("0");
   const [rpm, setRpm] = React.useState("0");
-  const [cw, setCw] = React.useState("0"); // 上下文窗口(K tokens);0=默认200K
+  const [cw, setCw] = React.useState("0"); // context window (K tokens); 0 = default 200K
   const [thinkingType, setThinkingType] = React.useState(NONE);
   const [effort, setEffort] = React.useState(NONE);
-  const [priority, setPriority] = React.useState("0"); // 轮询顺位;越大越先
+  const [priority, setPriority] = React.useState("0"); // pool order; higher = tried earlier
   const [poolExclude, setPoolExclude] = React.useState(false);
-  const [streaming, setStreaming] = React.useState(true); // true=流式(默认);false=非流式
-  const [maxTokens, setMaxTokens] = React.useState("0"); // 单次回复输出上限;0=不发送
-  const [maxTokensField, setMaxTokensField] = React.useState(NONE); // 上限用哪个字段名;NONE=max_tokens
-  const [sessionHeaderKey, setSessionHeaderKey] = React.useState(""); // 自定义会话头名;空=不发送
-  const [retry, setRetry] = React.useState<LLMRetryOverride>(ZERO_OVERRIDE); // 本配置的重试覆盖;全 0=跟随全局
+  const [streaming, setStreaming] = React.useState(true); // true = streaming (default); false = non-streaming
+  const [maxTokens, setMaxTokens] = React.useState("0"); // per-reply output cap; 0 = not sent
+  const [maxTokensField, setMaxTokensField] = React.useState(NONE); // which field name carries the cap; NONE = max_tokens
+  const [sessionHeaderKey, setSessionHeaderKey] = React.useState(""); // custom session header name; empty = not sent
+  const [retry, setRetry] = React.useState<LLMRetryOverride>(ZERO_OVERRIDE); // retry override for this profile; all 0 = follow the global
   const [testing, setTesting] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
   const [models, setModels] = React.useState<string[]>([]);
   const [loadingModels, setLoadingModels] = React.useState(false);
   const [modelsOpen, setModelsOpen] = React.useState(false);
 
-  // 每次打开时从传入的 profile 灌一遍表单（新建则重置为默认值）。抽屉关掉再打开
-  // 就是一次干净的开始，不会留下上一个配置的残影。
+  // Every time it opens, the form is re-filled from the passed-in profile (reset to defaults when creating). Closing and reopening
+  // the drawer is a clean start, leaving no leftovers from the previous profile.
   React.useEffect(() => {
     if (!open) return;
     setName(profile?.name ?? "");
@@ -373,12 +373,12 @@ function ProfileSheet({
       if (r.ok && r.models && r.models.length > 0) {
         setModels(r.models);
         setModelsOpen(true);
-        toast.success(`Loaded ${r.models.length} A model`);
+        toast.success(`Loaded ${r.models.length} models`);
       } else {
-        toast.error(`Loading model failed:${r.error ?? "No model retrieved"}`);
+        toast.error(`Failed to load models: ${r.error ?? "no models returned"}`);
       }
     } catch (e) {
-      toast.error(`Error loading model:${(e as Error).message}`);
+      toast.error(`Error loading models: ${(e as Error).message}`);
     } finally {
       setLoadingModels(false);
     }
@@ -388,8 +388,8 @@ function ProfileSheet({
     if (testing) return;
     setTesting(true);
     try {
-      // 用配置实际会跑的思考参数来测，这样不支持该字段的模型在这里就失败，
-      // 而不是等到跑任务时才炸。传 profile id：Key 输入框留空时用已存的 Key。
+      // Test with the thinking parameters the profile would actually run, so a model that does not support the field fails here,
+      // not when a task is already running. Pass the profile id: with the Key input left empty, the stored Key is used.
       const r = await api.testLLM(
         format,
         model,
@@ -402,14 +402,14 @@ function ProfileSheet({
         streaming,
         sessionHeaderKey.trim(),
       );
-      // 回复内容一并展示：看得见模型确实说了话，才算和会话里跑通是一回事。
+      // Show the reply too: only when the model demonstrably spoke is this the same as working inside a session.
       if (r.ok)
-        toast.success(`Connection was successful. ${r.latency_ms ?? "?"}ms · ${r.model ?? model}`, {
-          description: r.reply ? `Response:${r.reply}` : undefined,
+        toast.success(`Connected · ${r.latency_ms ?? "?"}ms · ${r.model ?? model}`, {
+          description: r.reply ? `Reply: ${r.reply}` : undefined,
         });
-      else toast.error(`Connection failed:${r.error ?? "Unknown"}`);
+      else toast.error(`Connection failed: ${r.error ?? "unknown"}`);
     } catch (e) {
-      toast.error(`Test error:${(e as Error).message}`);
+      toast.error(`Test error: ${(e as Error).message}`);
     } finally {
       setTesting(false);
     }
@@ -417,7 +417,7 @@ function ProfileSheet({
 
   async function save() {
     if (!name.trim() || !model.trim()) {
-      toast.error("Please fill in your name and model.");
+      toast.error("Please fill in a name and a model");
       return;
     }
     if (saving) return;
@@ -440,18 +440,18 @@ function ProfileSheet({
         pool_exclude: poolExclude,
         streaming,
         max_tokens: Math.max(0, Number(maxTokens) || 0),
-        // 字段名开关只对 openai(Chat Completions) 有意义，其它格式一律回落到默认；
-        // 后端也会再做一次同样的归一化，这里只是别让 UI 送出自相矛盾的值。
+        // The field-name switch only matters for openai (Chat Completions); every other format falls back to the default,
+        // and the backend re-applies the same normalization; this just keeps the UI from sending contradictory values.
         max_tokens_field: format === "openai" ? toStore(maxTokensField) : "",
         session_header_key: sessionHeaderKey.trim(),
         retry,
       });
-      if (isNew) toast.success(`Created:${name.trim()}(Set Activation on card to enable)`);
-      else toast.success(profile?.is_default ? "Saved, active configuration immediately effective without restarting" : "Saved");
+      if (isNew) toast.success(`Created: ${name.trim()} (use "Set as active" on its card to enable it)`);
+      else toast.success(profile?.is_default ? "Saved; the active profile takes effect immediately, no restart needed" : "Saved");
       onSaved(String(id));
       onOpenChange(false);
     } catch (e) {
-      toast.error(`Failed to save:${(e as Error).message}`);
+      toast.error(`Save failed: ${(e as Error).message}`);
     } finally {
       setSaving(false);
     }
@@ -465,7 +465,7 @@ function ProfileSheet({
       >
         <SheetHeader className="px-4">
           <SheetTitle className="flex items-center gap-2">
-            {isNew ? "New Model Configuration" : `Edit:${profile?.name}`}
+            {isNew ? "New model profile" : `Edit: ${profile?.name}`}
             {profile?.is_default && (
               <Badge variant="outline" className="border-amber-400/50 text-amber-500">
                 Active
@@ -474,8 +474,8 @@ function ProfileSheet({
           </SheetTitle>
           <SheetDescription>
             {isNew
-              ? "If you are new, you will not automatically activate. Please use the \"Set As\" on the card to enable it."
-              : "Click to save after modification; active configuration save is effective for all Agents immediately."}
+              ? "New profiles are not activated automatically; use 'Set as active' on its card to enable it."
+              : "Click save after editing; saving the active profile takes effect immediately for all agents."}
           </SheetDescription>
         </SheetHeader>
 
@@ -485,7 +485,7 @@ function ProfileSheet({
               <Label htmlFor="p-name">Name</Label>
               <Input
                 id="p-name"
-                placeholder={"For example: OpenAI Production"}
+                placeholder="e.g. OpenAI production"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
@@ -494,7 +494,7 @@ function ProfileSheet({
               <Label>Format</Label>
               <Select value={format} onValueChange={(v) => setFormat(v as "anthropic" | "openai" | "openai-responses")}>
                 <SelectTrigger>
-                  <SelectValue placeholder={"Select Format"} />
+                  <SelectValue placeholder="Select a format" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="anthropic">Anthropic</SelectItem>
@@ -515,8 +515,8 @@ function ProfileSheet({
                 value={model}
                 onChange={(e) => setModel(e.target.value)}
               />
-              {/* modal: 这个 Popover 的内容被 portal 到 <body>，在 Sheet 的滚动锁之外，
-                  不加 modal 时列表能渲染却滚不动。modal 让它自己持有最上层滚动锁。 */}
+              {/* modal: this Popover's content is portaled to <body>, outside the Sheet's scroll lock,
+                  so without modal the list renders but cannot scroll. modal lets it hold the topmost scroll lock itself. */}
               <Popover open={modelsOpen} onOpenChange={setModelsOpen} modal>
                 <PopoverTrigger asChild>
                   <Button
@@ -526,7 +526,7 @@ function ProfileSheet({
                     className="shrink-0"
                     disabled={loadingModels}
                     onClick={loadModels}
-                    title={"Load available models from API"}
+                    title="Load available models from the API"
                   >
                     {loadingModels ? <Loader2Icon className="animate-spin" /> : <RefreshCwIcon />}
                   </Button>
@@ -573,8 +573,8 @@ function ProfileSheet({
               onChange={(e) => setProxy(e.target.value)}
             />
             <p className="text-muted-foreground text-xs">
-              LLM only requests to leave the agent at the stop, supporting http/https/socks5, with an account code (e. g.
-              Socks5://user:pass@host:port, password with special characters URL encoding; leave empty means no proxy (direct connection).
+              Only outbound LLM requests go through this proxy; http/https/socks5 are supported, optionally with credentials (e.g.
+              socks5://user:pass@host:port — URL-encode the password if it contains special characters). Leave empty for no proxy (direct connection).
             </p>
           </div>
 
@@ -583,14 +583,14 @@ function ProfileSheet({
             <Input
               id="p-session-header"
               className="font-mono"
-              placeholder={"e. g. x-session-id (leave = not sent)"}
+              placeholder="e.g. x-session-id (empty = not sent)"
               value={sessionHeaderKey}
               onChange={(e) => setSessionHeaderKey(e.target.value)}
             />
             <p className="text-muted-foreground text-xs">
-              When you fill in your headname, this HTTP header is used every time you ask for a header. The header is automatically entered as <b>Session id</b>(chat session like
-              conv-12, workker, e. g. exp3-worker-i87. Use to use session-id header to make hint caches/
-              Sticky path path gateway; multiple rounds of the same session are stable and different from one another. Leave a blank while not sending.
+              Once a header name is set, every request carries this HTTP header, with the value filled in automatically as the <b>current session's session id</b> (chat sessions like
+              conv-12, workers like exp3-worker-i87). Meant for gateways that do prompt caching /
+              sticky routing on a session-id header; stable across turns of one session, distinct across sessions. Leave empty to not send it.
             </p>
           </div>
 
@@ -599,7 +599,7 @@ function ProfileSheet({
             <Input
               id="p-api-key"
               type="password"
-              placeholder={keyHint ? `Set${keyHint}) , leave the empty space unchanged` : "sk-…"}
+              placeholder={keyHint ? `Set (${keyHint}); leave empty to keep it` : "sk-…"}
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
             />
@@ -607,11 +607,11 @@ function ProfileSheet({
 
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="grid gap-2">
-              <Label htmlFor="p-rps">Speed limit per second</Label>
+              <Label htmlFor="p-rps">Rate limit per second</Label>
               <Input id="p-rps" type="number" min={0} value={rps} onChange={(e) => setRps(e.target.value)} />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="p-rpm">Speed limit per minute</Label>
+              <Label htmlFor="p-rpm">Rate limit per minute</Label>
               <Input id="p-rpm" type="number" min={0} value={rpm} onChange={(e) => setRpm(e.target.value)} />
             </div>
             <div className="grid gap-2">
@@ -628,18 +628,18 @@ function ProfileSheet({
             </div>
           </div>
           <p className="-mt-2 text-muted-foreground text-xs">
-            Speed limit 0 = unlimited, all Agent shares. Context window units K (thousands token), 0 = default 200K, upper limit 1000 (i.e.
-            1M); too high to trigger compression.
+            Rate limits of 0 mean unlimited, shared across all agents. The context window is in K (thousand tokens); 0 = the 200K default, capped at 1000 (i.e.
+            1M). Setting it too high keeps compression from ever triggering.
           </p>
 
           <div className="grid gap-3 rounded-lg border p-3">
             <div className="flex items-center justify-between gap-4">
               <div className="grid gap-0.5">
                 <Label htmlFor="p-priority" className="text-sm">
-                  Rotation Priority
+                  Pool priority
                 </Label>
                 <p className="text-muted-foreground text-xs">
-                  The larger the number, the larger the number, the first to be selected; the active configuration is constant 1-to-be, which has nothing to do with the value. The configuration of the same priority will rotate, with a natural contribution.
+                  Higher numbers are picked first; the active profile is always first regardless of this value. Profiles with equal priority take turns leading, spreading quota naturally.
                 </p>
               </div>
               <Input
@@ -652,24 +652,24 @@ function ProfileSheet({
             </div>
             <div className="flex items-center justify-between gap-4 border-t pt-3">
               <div className="grid gap-0.5">
-                <Label className="text-sm">Excluded from polling</Label>
+                <Label className="text-sm">Excluded from pool</Label>
                 <p className="text-muted-foreground text-xs">
-                  Starts without being used as a downtime transfer target (which can still be specified by Agent/ Task Visibility). Suitable for "for only one Agent"
-                  "It's a very expensive setup to set fire to people if they don't want to fail."
+                  When enabled, this profile is never used as a failover target (Agents / tasks can still pin it explicitly). Suited to expensive profiles reserved for one specific Agent
+                  that should not be burned through by other agents' failures.
                 </p>
               </div>
-              <Switch checked={poolExclude} onCheckedChange={setPoolExclude} aria-label={"Excluded from polling"} />
+              <Switch checked={poolExclude} onCheckedChange={setPoolExclude} aria-label="Excluded from pool" />
             </div>
             <div className="flex items-center justify-between gap-4 border-t pt-3">
               <div className="grid gap-0.5">
-                <Label className="text-sm">Streaming Output</Label>
+                <Label className="text-sm">Streaming output</Label>
                 <p className="text-muted-foreground text-xs">
-                  Turn on (default) streaming SSE with running real-time progress and real-time token counting. Turning off is real non-flow (stream: false, etc.)
-                  One-time return of the full response) - the SSE achieved by bypassing parts of the gateway (empty frame / think field drops)
-                  The cost is the loss of real-time progress in operation.
+                  On (default) streams over SSE, with live in-flight progress and real-time token counting. Off uses true non-streaming (stream:false,
+                  returning the full response in one shot) — a way around gateways with broken SSE implementations (empty frames / dropped thinking-field frames),
+                  at the cost of losing live in-flight progress.
                 </p>
               </div>
-              <Switch checked={streaming} onCheckedChange={setStreaming} aria-label={"Streaming output"} />
+              <Switch checked={streaming} onCheckedChange={setStreaming} aria-label="Streaming output" />
             </div>
           </div>
 
@@ -677,12 +677,12 @@ function ProfileSheet({
             <div className="flex items-center justify-between gap-4">
               <div className="grid gap-0.5">
                 <Label htmlFor="p-max-tokens" className="text-sm">
-                  Output limit. max tokens
+                  Output cap · max tokens
                 </Label>
                 <p className="text-muted-foreground text-xs">
-                  The maximum number of tokens generated by a single response is sent with each request. 0 (default) = does not send the field, as determined by the service-end default.
-                  This is different from the context window above: it's the total size of the model, which is used locally to calculate the compression threshold.
-                  It's too small to let the reasoning model be cut off at the thinking stage, and there's no answer.
+                  How many tokens a single reply may generate at most; sent with every request. 0 (default) = the field is not sent, leaving it to the server default.
+                  This is not the same thing as the "context window" above: that is the model's total capacity, used only locally to compute the compression threshold.
+                  Set it too low and a reasoning model gets truncated mid-thinking, unable to emit even a one-word answer.
                 </p>
               </div>
               <Input
@@ -697,7 +697,7 @@ function ProfileSheet({
             </div>
             <div className="flex items-center justify-between gap-4 border-t pt-3">
               <div className="grid gap-0.5">
-                <Label className="text-sm">Upper limit field name</Label>
+                <Label className="text-sm">Cap field name</Label>
                 <p className="text-muted-foreground text-xs">{MAX_TOKENS_FIELD_HINTS[format]}</p>
               </div>
               <Select
@@ -722,10 +722,10 @@ function ProfileSheet({
           <div className="grid gap-3 rounded-lg border p-3">
             <div className="flex items-center justify-between gap-4">
               <div className="grid gap-0.5">
-                <Label className="text-sm">Thinking. type.</Label>
+                <Label className="text-sm">Thinking switch · thinking.type</Label>
                 <p className="text-muted-foreground text-xs">
-                  Controls whether or not to send thinking fields. Do not send = without the field (models compatible with non-supported Mini Max etc.); close = hair
-                  Disabled; Starts = launchable. Independent of the strength below.
+                  Controls whether the thinking field is sent. Not sent = the field is omitted (compatible with models like MiniMax that lack support); Disabled = send
+                  disabled; Enabled = send enabled. Independent of the effort below.
                 </p>
               </div>
               <Select value={thinkingType} onValueChange={setThinkingType}>
@@ -743,10 +743,10 @@ function ProfileSheet({
             </div>
             <div className="flex items-center justify-between gap-4 border-t pt-3">
               <div className="grid gap-0.5">
-                <Label className="text-sm">Reasoning effort · reasoning_effort</Label>
+                <Label className="text-sm">Thinking effort · reasoning_effort</Label>
                 <p className="text-muted-foreground text-xs">
-                  Independent effort setting (OpenAI reasoning_effort / Anthropic output_config.effort). Some APIs do not expose thinking
-                  Fields can only be activated by strength, so they can be set up separately and do not send a thought switch.
+                  A separate effort knob (OpenAI reasoning_effort / Anthropic output_config.effort). Some APIs have no thinking
+                  field and activate thinking via effort alone, so it can be set on its own without sending the thinking switch.
                 </p>
               </div>
               <Select value={effort} onValueChange={setEffort}>
@@ -770,12 +770,12 @@ function ProfileSheet({
         <div className="flex gap-2 border-t px-4 py-3">
           <Button variant="outline" onClick={testConnection} disabled={testing}>
             {testing ? <Loader2Icon className="animate-spin" /> : <PlugZapIcon />}
-            {testing ? "Testing..." : "Test Connection"}
+            {testing ? "Testing…" : "Test connection"}
           </Button>
           <Button onClick={save} disabled={saving} className="flex-1">
             {saving && <Loader2Icon className="animate-spin" />}
             {!saving && (isNew ? <PlusIcon /> : <SaveIcon />)}
-            {isNew ? "New" : "Save"}
+            {isNew ? "Create" : "Save"}
           </Button>
         </div>
       </SheetContent>
@@ -789,8 +789,8 @@ export default function LLMPage() {
   const [profiles, setProfiles] = React.useState<LLMProfile[]>([]);
   const [pool, setPool] = React.useState<LLMPoolStatus | null>(null);
   const [poolOpen, setPoolOpen] = React.useState(false);
-  // 抽屉的开关和内容分开存：关闭时 editing 保持不变，否则关闭动画期间标题会从
-  // 「编辑 X」闪成「新建」。editing = null 表示新建。
+  // The drawer's open flag and its content are stored separately: editing stays put on close, otherwise during the closing animation the title would flash
+  // from "Edit X" to "New". editing = null means create.
   const [editOpen, setEditOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<LLMProfile | null>(null);
   const openEditor = React.useCallback((p: LLMProfile | null) => {
@@ -819,7 +819,7 @@ export default function LLMPage() {
     void load();
   }, [load]);
 
-  // 卡片上的健康徽章按 profile id 取轮询状态。
+  // The health badge on each card reads pool state by profile id.
   const health = React.useMemo(() => {
     const m = new Map<string, LLMPoolMember>();
     for (const c of pool?.chain ?? []) m.set(c.profile_id, c);
@@ -829,24 +829,24 @@ export default function LLMPage() {
   async function activate(id: string, name: string) {
     try {
       await api.activateLLMProfile(id);
-      toast.success(`Activated:${name}`);
+      toast.success(`Activated: ${name}`);
       await load();
     } catch (e) {
-      toast.error(`Activate failed:${(e as Error).message}`);
+      toast.error(`Activation failed: ${(e as Error).message}`);
     }
   }
 
   async function remove(p: LLMProfile) {
     if (p.is_default) {
-      toast.error("Could not remove current active configuration");
+      toast.error("Cannot delete the active profile");
       return;
     }
     try {
       await api.deleteLLMProfile(p.id);
-      toast.success(`Deleted:${p.name}`);
+      toast.success(`Deleted: ${p.name}`);
       await load();
     } catch (e) {
-      toast.error(`Failed to delete:${(e as Error).message}`);
+      toast.error(`Delete failed: ${(e as Error).message}`);
     }
   }
 
@@ -858,28 +858,28 @@ export default function LLMPage() {
         <div>
           <h1 className="font-semibold text-xl tracking-tight">LLM</h1>
           <p className="text-muted-foreground text-sm">
-            All Agent shared format / model / speed limit configuration. Click on the card editor, the asterisk is currently active configuration.
+            Format / model / rate-limit settings shared by all agents. Click a card to edit it; the starred card is the active profile.
           </p>
         </div>
         <div className="flex items-center gap-2">
           <Button size="sm" variant="outline" onClick={() => setPoolOpen(true)}>
-            <ZapIcon /> Rotation settings
+            <ZapIcon /> Pool settings
             {poolOn && (
               <Badge variant="outline" className="ml-1 border-emerald-500/50 text-emerald-600 dark:text-emerald-400">
-                Enabled
+                On
               </Badge>
             )}
           </Button>
           <Button size="sm" variant="outline" onClick={() => openEditor(null)}>
-            <PlusIcon /> New
+            <PlusIcon /> Create
           </Button>
         </div>
       </div>
 
       <Tabs defaultValue="profiles" className="flex-1">
         <TabsList>
-          <TabsTrigger value="profiles">Model configuration</TabsTrigger>
-          <TabsTrigger value="retry">Retries and backoff</TabsTrigger>
+          <TabsTrigger value="profiles">Model profiles</TabsTrigger>
+          <TabsTrigger value="retry">Retry & backoff</TabsTrigger>
         </TabsList>
 
         <TabsContent value="profiles" className="mt-4">
@@ -887,7 +887,7 @@ export default function LLMPage() {
             {profiles.map((p) => {
               const h = healthOf(p, health.get(p.id));
               return (
-                // biome-ignore lint/a11y/useSemanticElements: 卡片内含自己的操作按钮，用原生 <button> 会造成按钮嵌套（非法 HTML）
+                // biome-ignore lint/a11y/useSemanticElements: the card contains its own action buttons; a native <button> would nest buttons (invalid HTML)
                 <Card
                   key={p.id}
                   role="button"
@@ -933,12 +933,12 @@ export default function LLMPage() {
                       </span>
                       {p.proxy && <span className="truncate">Proxy {p.proxy}</span>}
                       {p.reasoning_effort && (
-                        <span>Reasoning {p.reasoning_effort === "off" ? "Off" : p.reasoning_effort}</span>
+                        <span>Thinking {p.reasoning_effort === "off" ? "off" : p.reasoning_effort}</span>
                       )}
-                      {/* 轮询相关的两个字段只在轮询开着时才有意义，关着时不占版面 */}
+                      {/* The two pool-related fields only matter when the pool is on; when it is off they take no space */}
                       {poolOn &&
                         !p.is_default &&
-                        (p.pool_exclude ? <span>Excluded from polling</span> : <span>Priority {p.priority ?? 0}</span>)}
+                        (p.pool_exclude ? <span>Excluded from pool</span> : <span>Priority {p.priority ?? 0}</span>)}
                     </div>
 
                     <div className="mt-1 flex gap-2">
@@ -952,12 +952,12 @@ export default function LLMPage() {
                           void activate(p.id, p.name);
                         }}
                       >
-                        {p.is_default ? "Activated" : "Set as active"}
+                        {p.is_default ? "Active" : "Set as active"}
                       </Button>
                       <Button
                         size="icon"
                         variant="outline"
-                        aria-label={"Remove Configuration"}
+                        aria-label="Delete profile"
                         onClick={(e) => {
                           e.stopPropagation();
                           void remove(p);
@@ -972,7 +972,7 @@ export default function LLMPage() {
             })}
             {profiles.length === 0 && (
               <div className="col-span-full rounded-lg border border-dashed p-10 text-center text-muted-foreground text-sm">
-                No model configuration yet, click on the top right corner to create the first "New".
+                No model profiles yet — click "Create" in the top right to add the first one.
               </div>
             )}
           </div>

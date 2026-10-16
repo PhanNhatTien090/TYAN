@@ -73,7 +73,7 @@ export function RetestsTab({ taskId }: { taskId: string }) {
       {error ? (
         <Alert variant="destructive">
           <AlertDescription>
-            Failed to load task findings:{error}
+            Failed to load task vulnerabilities: {error}
             <Button variant="outline" size="sm" onClick={refresh}>
               Retry
             </Button>
@@ -83,8 +83,8 @@ export function RetestsTab({ taskId }: { taskId: string }) {
       <div className="grid items-start gap-4 lg:grid-cols-[minmax(16rem,22rem)_minmax(0,1fr)]">
         <Card className="min-w-0">
           <CardHeader>
-            <CardTitle>Select finding{data ? ` · ${data.total}` : ""}</CardTitle>
-            <CardDescription>View the retrospect of this task loophole or initiate a new retrospect.</CardDescription>
+            <CardTitle>Select a vulnerability{data ? ` · ${data.total}` : ""}</CardTitle>
+            <CardDescription>View retest history for this task's vulnerabilities, or start a new retest.</CardDescription>
           </CardHeader>
           <CardContent className="flex max-h-[32rem] flex-col overflow-y-auto">
             {!loaded && !error ? <Skeleton className="h-24 w-full" /> : null}
@@ -94,7 +94,7 @@ export function RetestsTab({ taskId }: { taskId: string }) {
                 <Button
                   variant={finding.id === selectedId ? "secondary" : "ghost"}
                   className="h-auto w-full shrink-0 flex-col items-start gap-2 whitespace-normal py-3 text-left"
-                  aria-label={`Select finding:${findingLabel(finding)}`}
+                  aria-label={`Select vulnerability: ${findingLabel(finding)}`}
                   aria-pressed={finding.id === selectedId}
                   onClick={() => setSelectedId(finding.id)}
                 >
@@ -109,8 +109,8 @@ export function RetestsTab({ taskId }: { taskId: string }) {
             {loaded && findings.length === 0 ? (
               <Empty>
                 <EmptyHeader>
-                  <EmptyTitle>No findings available for retest</EmptyTitle>
-                  <EmptyDescription>Once this mission has identified a loophole, it can be manually re-detected here.</EmptyDescription>
+                  <EmptyTitle>No vulnerabilities to retest</EmptyTitle>
+                  <EmptyDescription>Once this task discovers vulnerabilities, you can manually start a retest here.</EmptyDescription>
                 </EmptyHeader>
               </Empty>
             ) : null}
@@ -120,19 +120,19 @@ export function RetestsTab({ taskId }: { taskId: string }) {
               <Button
                 variant="outline"
                 size="icon-sm"
-                aria-label={"Previous finding"}
+                aria-label="Previous page of vulnerabilities"
                 disabled={page === 1}
                 onClick={() => setPage(page - 1)}
               >
                 <ChevronLeftIcon />
               </Button>
               <span className="text-muted-foreground text-xs">
-                Page {page} / {Math.ceil(data.total / PAGE_SIZE)} pages
+                Page {page} / {Math.ceil(data.total / PAGE_SIZE)}
               </span>
               <Button
                 variant="outline"
                 size="icon-sm"
-                aria-label={"Next finding"}
+                aria-label="Next page of vulnerabilities"
                 disabled={page * PAGE_SIZE >= data.total}
                 onClick={() => setPage(page + 1)}
               >
@@ -148,7 +148,7 @@ export function RetestsTab({ taskId }: { taskId: string }) {
                 <h2 className="min-w-0 flex-1 break-words font-medium">{findingLabel(selected)}</h2>
                 <Button asChild variant="ghost" size="sm">
                   <Link href={`/function/findings/detail?id=${selected.finding_id || selected.id}`}>
-                    Finding details <ArrowUpRightIcon data-icon="inline-end" />
+                    Vulnerability details <ArrowUpRightIcon data-icon="inline-end" />
                   </Link>
                 </Button>
               </div>

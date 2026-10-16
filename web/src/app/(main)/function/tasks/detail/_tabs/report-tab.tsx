@@ -43,7 +43,7 @@ export function ReportTab({ taskId }: { taskId: string }) {
       toast.success("Markdown copied");
       setTimeout(() => setCopied(false), 1500);
     } else {
-      toast.error("Copy failed; select and copy the text manually");
+      toast.error("Copy failed; please select the text and copy it manually");
     }
   }
 
@@ -74,7 +74,7 @@ export function ReportTab({ taskId }: { taskId: string }) {
     <Card>
       <CardHeader className="flex-row items-center justify-between">
         <CardTitle className="flex items-center gap-2 text-sm">
-          <FileTextIcon className="size-4" /> Permeability test report (Markdown)
+          <FileTextIcon className="size-4" /> Penetration test report (Markdown)
         </CardTitle>
         <div className="flex gap-2">
           {report && (

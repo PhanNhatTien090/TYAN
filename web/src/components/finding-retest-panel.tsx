@@ -19,13 +19,13 @@ import { api } from "@/lib/api";
 import type { FindingRetest } from "@/lib/types";
 
 const statusLabels = {
-  pending: "Waiting for startup",
+  pending: "Waiting to start",
   running: "Retesting",
   completed: "Completed",
   failed: "Retest failed",
   stopped: "Stopped",
 };
-const verdictLabels = { reproduced: "Still reproducible", fixed: "Fixed", inconclusive: "Unable to confirm" };
+const verdictLabels = { reproduced: "Still reproducible", fixed: "Fixed", inconclusive: "Inconclusive" };
 
 function active(r: FindingRetest) {
   return r.status === "pending" || r.status === "running";
@@ -84,12 +84,12 @@ export function FindingRetestPanel({
     <Card>
       <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-3">
         <div className="flex flex-col gap-1.5">
-          <CardTitle>Finding retest</CardTitle>
-          <CardDescription>Validate the current state in an independent session and preserve the conclusions and evidence of each re-examination.</CardDescription>
+          <CardTitle>Vulnerability retest</CardTitle>
+          <CardDescription>Verifies the current state in a separate session, keeping each retest's verdict and evidence.</CardDescription>
         </div>
         {running?.conversation_id != null ? (
           <Button asChild variant="outline" size="sm">
-            <Link href={`/chat?c=${running.conversation_id}`} title={"View the active retest session"}>
+            <Link href={`/chat?c=${running.conversation_id}`} title="View the running retest session">
               <Spinner data-icon="inline-start" aria-hidden="true" />
               Retesting
             </Link>
@@ -106,7 +106,7 @@ export function FindingRetestPanel({
         {error ? (
           <Alert variant="destructive">
             <AlertDescription>
-              Failed to load retests:{error}
+              Failed to load retest records: {error}
               <Button variant="outline" size="sm" onClick={() => void load()}>
                 Retry
               </Button>
@@ -117,8 +117,8 @@ export function FindingRetestPanel({
         {!error && items?.length === 0 ? (
           <Empty>
             <EmptyHeader>
-              <EmptyTitle>No retests yet</EmptyTitle>
-              <EmptyDescription>Upon completion of the rehabilitation deployment, retroactivity can be initiated and new and old evidence can be compared.</EmptyDescription>
+              <EmptyTitle>No retest records</EmptyTitle>
+              <EmptyDescription>Once the fix is deployed, start a retest to compare new and old evidence.</EmptyDescription>
             </EmptyHeader>
           </Empty>
         ) : null}
@@ -138,10 +138,10 @@ export function FindingRetestPanel({
                   </span>
                   {item.conversation_id != null ? (
                     <Button asChild variant="ghost" size="sm" className="ml-auto">
-                      <Link href={`/chat?c=${item.conversation_id}`}>View Sessions</Link>
+                      <Link href={`/chat?c=${item.conversation_id}`}>View session</Link>
                     </Button>
                   ) : (
-                    <span className="text-muted-foreground text-xs">Session deleted</span>
+                    <span className="text-muted-foreground text-xs">Conversation deleted</span>
                   )}
                 </div>
                 {item.status === "completed" && item.summary ? (
@@ -152,7 +152,7 @@ export function FindingRetestPanel({
                 ) : null}
                 {item.notes ? (
                   <p className="whitespace-pre-wrap break-words text-muted-foreground text-xs">
-                    Additional note:{item.notes}
+                    Notes: {item.notes}
                   </p>
                 ) : null}
                 {item.status === "completed" && item.evidence ? (

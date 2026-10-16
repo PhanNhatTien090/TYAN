@@ -35,7 +35,7 @@ function ProfileRoleBadge({ index, currentIndex }: { index: number; currentIndex
   if (index === currentIndex) return <Badge variant="default">Current</Badge>;
   if (index < currentIndex) {
     return (
-      <Badge variant="outline" title={"The configuration before the current cursor will not be selected for automatic failure"}>
+      <Badge variant="outline" title="Profiles before the current cursor are not picked by automatic failover">
         Skipped
       </Badge>
     );
@@ -108,12 +108,12 @@ export function TaskLLMProfileChain({
           </ComboboxValue>
           <ComboboxChipsInput
             id={inputId}
-            placeholder={profiles.length > 0 ? "Search and add LLM configuration" : "LLM configuration not available"}
+            placeholder={profiles.length > 0 ? "Search and add LLM profiles" : "No LLM profiles available"}
             disabled={disabled ? true : profilesUnavailable}
           />
         </ComboboxChips>
         <ComboboxContent portalContainer={portalContainer}>
-          <ComboboxEmpty>No matching LLM configuration</ComboboxEmpty>
+          <ComboboxEmpty>No matching LLM profiles</ComboboxEmpty>
           <ComboboxList>
             {(id) => {
               const profile = profilesByID.get(id);
@@ -123,7 +123,7 @@ export function TaskLLMProfileChain({
                     <span className="flex min-w-0 items-center gap-2">
                       <span className="truncate">
                         {profile?.name ?? `Profile #${id}`}
-                        {profile?.is_default ? "(activated)" : ""}
+                        {profile?.is_default ? " (active)" : ""}
                       </span>
                     </span>
                     {profile && <span className="truncate text-muted-foreground text-xs">{profile.model}</span>}
@@ -136,7 +136,7 @@ export function TaskLLMProfileChain({
       </Combobox>
 
       {value.length === 0 ? (
-        <p className="text-muted-foreground text-xs">When no configuration is specified, the task follows either the Agent or the global activation configuration.</p>
+        <p className="text-muted-foreground text-xs">When no profile is set, the task follows the agent or the global active profile.</p>
       ) : (
         <div className="flex flex-col divide-y rounded-lg border">
           {value.map((id, index) => {
@@ -150,7 +150,7 @@ export function TaskLLMProfileChain({
                 <div className="min-w-0 sm:flex-1">
                   <p className="truncate font-medium text-sm">{profile?.name ?? `Profile #${id}`}</p>
                   <div className="flex min-w-0 items-center gap-2">
-                    <p className="truncate text-muted-foreground text-xs">{profile?.model ?? "Configuration no longer available"}</p>
+                    <p className="truncate text-muted-foreground text-xs">{profile?.model ?? "Profile unavailable"}</p>
                   </div>
                 </div>
                 <ProfileRoleBadge index={index} currentIndex={currentIndex} />
@@ -159,7 +159,7 @@ export function TaskLLMProfileChain({
                     type="button"
                     variant="ghost"
                     size="icon-sm"
-                    aria-label={"Move Configuration Up"}
+                    aria-label="Move profile up"
                     onClick={() => move(index, -1)}
                     disabled={disabled ? true : index === 0}
                   >
@@ -169,7 +169,7 @@ export function TaskLLMProfileChain({
                     type="button"
                     variant="ghost"
                     size="icon-sm"
-                    aria-label={"Move Down Configuration"}
+                    aria-label="Move profile down"
                     onClick={() => move(index, 1)}
                     disabled={disabled ? true : index === value.length - 1}
                   >
@@ -179,7 +179,7 @@ export function TaskLLMProfileChain({
                     type="button"
                     variant="ghost"
                     size="icon-sm"
-                    aria-label={"Remove Configuration"}
+                    aria-label="Remove profile"
                     onClick={() => remove(id)}
                     disabled={disabled}
                   >
@@ -194,7 +194,7 @@ export function TaskLLMProfileChain({
 
       {onActiveProfileChange && value.length > 0 && (
         <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
-          <span className="font-medium text-sm">Current Configuration</span>
+          <span className="font-medium text-sm">Current profile</span>
           <Select
             value={activeProfileId && value.includes(activeProfileId) ? activeProfileId : value[0]}
             onValueChange={onActiveProfileChange}

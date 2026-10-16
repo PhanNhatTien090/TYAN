@@ -17,6 +17,7 @@ import (
 // from history on a resumed session (design doc C2).
 type DeferredInfo struct {
 	FindingGuidance string            // derived from the final permitted tools, including DB overrides
+	CaseGuidance    string            // independent of optional traffic binding
 	Deferred        []string          // all MCP tool names (schema withheld)
 	GlobalNames     []string          // MCP names to list in the system-prompt block
 	Unlock          *actool.UnlockSet // shared call-gate; nil when no MCP tools
@@ -35,7 +36,7 @@ var ToolAugment func(ctx context.Context, agentKey string) (extra []actool.CoreT
 
 // AugmentTools returns base plus the agent's visible skill/MCP tools, the
 // DeferredInfo, and a cleanup func the caller must defer (closes MCP clients).
-// Built-in base tools are kept as-is — never filtered (内置工具留代码层，不做可见性过滤).
+// Built-in base tools are kept as-is — never filtered (built-in tools stay at the code layer, no visibility filtering).
 func AugmentTools(ctx context.Context, agentKey string, base []actool.CoreTool) ([]actool.CoreTool, DeferredInfo, func()) {
 	var (
 		def     DeferredInfo
@@ -60,7 +61,15 @@ func AugmentTools(ctx context.Context, agentKey string, base []actool.CoreTool) 
 	if ToolResolve != nil {
 		out = ToolResolve(ctx, agentKey, out)
 	}
+	if agentKey == "reporter" && isFindingCaseReview(ctx) {
+		out = historicalFindingCaseTools(out)
+	}
 	out, def.FindingGuidance = findingWorkflowTools(agentKey, out)
+	out, def.CaseGuidance = findingCaseWorkflow(agentKey, out)
+	if agentKey == "reporter" && isFindingCaseReview(ctx) {
+		def.FindingGuidance = ""
+		def.CaseGuidance += historicalFindingReviewGuidance
+	}
 	for i, t := range out {
 		out[i] = guardPanic(t)
 	}
@@ -80,7 +89,7 @@ func (g *guardedTool) Call(ctx context.Context, in json.RawMessage, tc *actool.T
 	defer func() {
 		if r := recover(); r != nil {
 			log.Printf("[tools] %s panic: %v\n%s", g.Name(), r, debug.Stack())
-			res, err = actool.Errorf(fmt.Sprintf("工具 %s 内部错误：%v（本次调用已失败，可换个参数或改用别的工具）", g.Name(), r)), nil
+			res, err = actool.Errorf(fmt.Sprintf("internal error in tool %s: %v (this call has failed; try different arguments or another tool)", g.Name(), r)), nil
 		}
 	}()
 	return g.CoreTool.Call(ctx, in, tc)

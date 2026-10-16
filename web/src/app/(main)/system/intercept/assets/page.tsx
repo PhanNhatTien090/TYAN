@@ -19,23 +19,23 @@ import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/lib/api";
 import type { AssetInterceptKind, AssetInterceptRule } from "@/lib/types";
 
-// ---- kind 元信息 ----
+// ---- kind metadata ----
 
 const KIND_OPTIONS: { value: AssetInterceptKind; label: string; group: string; placeholder: string }[] = [
   { value: "exact_domain", label: "Domain (exact)", group: "Exact match", placeholder: "example.gov.cn" },
   { value: "exact_ip", label: "IP (exact)", group: "Exact match", placeholder: "203.0.113.10" },
   { value: "exact_url", label: "URL (exact)", group: "Exact match", placeholder: "https://example.gov.cn/login" },
-  { value: "fuzzy_domain", label: "Domain (contains)", group: "Contains", placeholder: ".gov.cn" },
-  { value: "fuzzy_ip", label: "IP (contains)", group: "Contains", placeholder: "203.0.113." },
-  { value: "fuzzy_url", label: "URL (contains)", group: "Contains", placeholder: "/admin" },
-  { value: "cidr", label: "CIDR range", group: "Network range", placeholder: "192.168.0.0/16" },
+  { value: "fuzzy_domain", label: "Domain (fuzzy)", group: "Fuzzy match", placeholder: ".gov.cn" },
+  { value: "fuzzy_ip", label: "IP (fuzzy)", group: "Fuzzy match", placeholder: "203.0.113." },
+  { value: "fuzzy_url", label: "URL (fuzzy)", group: "Fuzzy match", placeholder: "/admin" },
+  { value: "cidr", label: "CIDR network", group: "CIDR", placeholder: "192.168.0.0/16" },
 ];
 
 const KIND_LABEL: Record<AssetInterceptKind, string> = Object.fromEntries(
   KIND_OPTIONS.map((o) => [o.value, o.label]),
 ) as Record<AssetInterceptKind, string>;
 
-const KIND_GROUPS = ["Exact match", "Contains", "Network range"];
+const KIND_GROUPS = ["Exact match", "Fuzzy match", "CIDR"];
 
 function KindBadge({ kind }: { kind: AssetInterceptKind }) {
   const fuzzy = kind.startsWith("fuzzy_");
@@ -77,12 +77,12 @@ type RuleForm = {
 
 const defaultForm = (): RuleForm => ({ enabled: true, kind: "fuzzy_domain", pattern: "", note: "" });
 
-// 前端轻校验（与后端一致：仅 exact_ip / cidr 做格式校验，其余交后端）。
+// Light frontend validation (matching the backend: only exact_ip / cidr get format checks, the rest is left to the backend).
 function frontValidate(form: RuleForm): string | null {
   const p = form.pattern.trim();
   if (!p) return "Match content cannot be empty";
   if (form.kind === "cidr" && !/^[0-9a-fA-F:.]+\/\d{1,3}$/.test(p)) {
-    return "CIDR format is invalid as 192.168.0.0/16";
+    return "Invalid CIDR format, e.g. 192.168.0.0/16";
   }
   return null;
 }
@@ -101,7 +101,7 @@ export default function AssetInterceptPage() {
     try {
       setRules(await api.assetInterceptRules());
     } catch {
-      toast.error("Failed to load asset intercept rules");
+      toast.error("Failed to load asset interception rules");
     } finally {
       setLoading(false);
     }
@@ -138,10 +138,10 @@ export default function AssetInterceptPage() {
     try {
       if (editing) {
         await api.updateAssetInterceptRule(editing.id, payload);
-        toast.success("Rules updated");
+        toast.success("Rule updated");
       } else {
         await api.createAssetInterceptRule(payload);
-        toast.success("Rules created");
+        toast.success("Rule created");
       }
       setOpen(false);
       load();
@@ -153,10 +153,10 @@ export default function AssetInterceptPage() {
   }
 
   async function handleDelete(rule: AssetInterceptRule) {
-    if (!window.confirm(`Make sure you remove the asset intercept rule."${rule.pattern}」？`)) return;
+    if (!window.confirm(`Are you sure you want to delete asset interception rule "${rule.pattern}"?`)) return;
     try {
       await api.deleteAssetInterceptRule(rule.id);
-      toast.success("Rules deleted");
+      toast.success("Rule deleted");
       load();
     } catch (e) {
       toast.error((e as Error).message);
@@ -180,21 +180,21 @@ export default function AssetInterceptPage() {
       <div className="flex items-center gap-2.5">
         <BanIcon className="h-5 w-5 shrink-0" />
         <div>
-          <h1 className="text-lg font-semibold leading-tight">Asset rules</h1>
+          <h1 className="text-lg font-semibold leading-tight">Asset interception</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Global asset blacklist: the hit domain / IP / URL/ segment will be stopped and will not be subjected to any operation
+            Global asset blocklist: matching domains / IPs / URLs / networks are intercepted; no operations run against them
           </p>
         </div>
       </div>
 
       <div className="flex items-center justify-between gap-3">
         <p className="text-xs text-muted-foreground">
-          Supports full-size-matched domain names / IP / URLs, and CIDR web links; default inverted government intercepts (.gov /.gov.cn) and education (.edu /
-          .edu.cn)
+          Supports exact and fuzzy matching for domains / IPs / URLs, plus CIDR networks; ships with built-in fuzzy blocks for government (.gov / .gov.cn) and education (.edu /
+          .edu.cn) sites
         </p>
         <Button onClick={openNew} size="sm" className="shrink-0">
           <PlusIcon className="h-4 w-4" />
-          New rule
+          Create rule
         </Button>
       </div>
 
@@ -205,10 +205,10 @@ export default function AssetInterceptPage() {
           ) : rules.length === 0 ? (
             <div className="flex flex-col items-center justify-center gap-2 py-16 text-center">
               <BanIcon className="h-8 w-8 text-muted-foreground/40" />
-              <p className="text-sm text-muted-foreground">There are no rules for asset interception.</p>
+              <p className="text-sm text-muted-foreground">No asset interception rules yet</p>
               <Button size="sm" variant="outline" onClick={openNew}>
                 <PlusIcon className="h-4 w-4" />
-                New First Rule
+                Create the first rule
               </Button>
             </div>
           ) : (
@@ -216,9 +216,9 @@ export default function AssetInterceptPage() {
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
                   <TableHead className="w-[130px]">Type</TableHead>
-                  <TableHead>Match Contents</TableHead>
-                  <TableHead>Remarks</TableHead>
-                  <TableHead className="w-[64px] text-center">Enable</TableHead>
+                  <TableHead>Match content</TableHead>
+                  <TableHead>Note</TableHead>
+                  <TableHead className="w-[64px] text-center">Enabled</TableHead>
                   <TableHead className="w-[80px]" />
                 </TableRow>
               </TableHeader>
@@ -237,7 +237,7 @@ export default function AssetInterceptPage() {
                       <div className="flex items-center gap-1.5">
                         {rule.builtin && (
                           <Badge variant="secondary" className="shrink-0 px-1 py-0 text-[10px]">
-                            Built in
+                            Built-in
                           </Badge>
                         )}
                         <span className="truncate">{rule.note}</span>
@@ -273,12 +273,12 @@ export default function AssetInterceptPage() {
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent side="right" className="flex flex-col gap-0 p-0 sm:max-w-md">
           <SheetHeader className="border-b px-6 py-4">
-            <SheetTitle>{editing ? "Edit asset interception rules" : "New Asset Interdiction Rules"}</SheetTitle>
-            <SheetDescription className="text-xs">Target assets that hit this rule will be intercepted across the board.</SheetDescription>
+            <SheetTitle>{editing ? "Edit asset interception rule" : "Create asset interception rule"}</SheetTitle>
+            <SheetDescription className="text-xs">Target assets matching this rule are intercepted globally</SheetDescription>
           </SheetHeader>
 
           <div className="flex-1 min-h-0 overflow-y-auto px-6 py-5 space-y-5">
-            <Field label={"Match Type"}>
+            <Field label="Match type">
               <Select value={form.kind} onValueChange={(v) => set({ kind: v as AssetInterceptKind })}>
                 <SelectTrigger>
                   <SelectValue />
@@ -301,13 +301,13 @@ export default function AssetInterceptPage() {
             </Field>
 
             <Field
-              label={"Match Contents"}
+              label="Match content"
               hint={
                 form.kind === "cidr"
-                  ? "CIDR web segment as 192.168.0.0/16"
+                  ? "CIDR network, e.g. 192.168.0.0/16"
                   : form.kind.startsWith("fuzzy_")
-                    ? "Fuzzy Match: The target contains this and hit"
-                    : "Full matching: Targets need to be fully consistent with this content"
+                    ? "Fuzzy match: hits when the target contains this content"
+                    : "Exact match: the target must equal this content exactly"
               }
             >
               <Input
@@ -317,9 +317,9 @@ export default function AssetInterceptPage() {
               />
             </Field>
 
-            <Field label={"Remarks (optional)"}>
+            <Field label="Note (optional)">
               <Textarea
-                placeholder={"Describe the use of this rule."}
+                placeholder="Describe what this rule is for"
                 value={form.note}
                 onChange={(e) => set({ note: e.target.value })}
                 rows={2}

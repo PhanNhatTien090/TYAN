@@ -55,10 +55,10 @@ function AgentGridCard({
   async function del() {
     try {
       await api.deleteAgent(agent.key);
-      toast.success(`Agent deleted:${agent.name}」`);
+      toast.success(`Agent "${agent.name}" deleted`);
       onDeleted();
     } catch (e) {
-      toast.error("Failed to delete:" + (e as Error).message);
+      toast.error("Delete failed: " + (e as Error).message);
     }
   }
   return (
@@ -70,7 +70,7 @@ function AgentGridCard({
           <span className="text-muted-foreground font-mono text-xs">{agent.key}</span>
           {agent.builtin ? (
             <Badge variant="secondary" className="px-1.5 py-0 text-[10px]">
-              Built in
+              Built-in
             </Badge>
           ) : (
             <Badge variant="outline" className="px-1.5 py-0 text-[10px]">
@@ -105,9 +105,9 @@ function AgentGridCard({
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Delete Agent{agent.name}」？</AlertDialogTitle>
+              <AlertDialogTitle>Delete agent "{agent.name}"?</AlertDialogTitle>
               <AlertDialogDescription>
-                . This operation cannot be revoked.
+                This also deletes its prompt, variables, visibility and tool bindings. This action cannot be undone.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -132,14 +132,14 @@ function CreateAgentDialog({ onCreated }: { onCreated: (key: string) => void }) 
     setBusy(true);
     try {
       const a = await api.createAgent(key.trim(), name.trim(), description.trim());
-      toast.success(`Created Agent${a.name}」`);
+      toast.success(`Agent "${a.name}" created`);
       setOpen(false);
       setKey("");
       setName("");
       setDescription("");
       onCreated(a.key);
     } catch (e) {
-      toast.error("Failed to create:" + (e as Error).message);
+      toast.error("Create failed: " + (e as Error).message);
     } finally {
       setBusy(false);
     }
@@ -152,14 +152,14 @@ function CreateAgentDialog({ onCreated }: { onCreated: (key: string) => void }) 
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button size="sm">
-          <PlusIcon /> New Agent
+          <PlusIcon /> Create agent
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>New custom agent</DialogTitle>
+          <DialogTitle>Create custom agent</DialogTitle>
           <DialogDescription>
-            Creates a session assistant. Key is used for internal identification and is not changed when created; name and description is used for identification.
+            Create a conversational assistant. The key is the internal identifier and cannot change after creation; the name and description are for identification.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-2">
@@ -167,20 +167,20 @@ function CreateAgentDialog({ onCreated }: { onCreated: (key: string) => void }) 
             <Label htmlFor="agent-key">Key</Label>
             <Input
               id="agent-key"
-              placeholder={"Like research_helper"}
+              placeholder="e.g. research_helper"
               value={key}
               onChange={(e) => setKey(e.target.value)}
               className="font-mono"
             />
             {key.length > 0 && !keyOk && (
-              <span className="text-destructive text-xs">The lowercase letter begins with a lowercase letter/number/underline</span>
+              <span className="text-destructive text-xs">Must start with a lowercase letter; only lowercase letters/digits/underscores</span>
             )}
           </div>
           <div className="grid gap-1.5">
             <Label htmlFor="agent-name">Name</Label>
             <Input
               id="agent-name"
-              placeholder={"Like, research assistant."}
+              placeholder="e.g. Research assistant"
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
@@ -189,7 +189,7 @@ function CreateAgentDialog({ onCreated }: { onCreated: (key: string) => void }) 
             <Label htmlFor="agent-desc">Description</Label>
             <Textarea
               id="agent-desc"
-              placeholder={"One word of this. What does Agent do?"}
+              placeholder="One line on what this agent does"
               rows={2}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -225,7 +225,7 @@ export default function AgentsPage() {
         <div>
           <h1 className="text-xl font-semibold tracking-tight">Agent</h1>
           <p className="text-muted-foreground text-sm">
-            Embedded Agent's hint/configuration, and custom session Agent's creation and management
+            Prompts/configs for built-in agents, plus creating and managing custom conversational agents
           </p>
         </div>
         <CreateAgentDialog
@@ -238,12 +238,12 @@ export default function AgentsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Agent List</CardTitle>
-          <CardDescription>Total {agents.length} items</CardDescription>
+          <CardTitle>Agent list</CardTitle>
+          <CardDescription>{agents.length} total</CardDescription>
         </CardHeader>
         <CardContent>
           {agents.length === 0 ? (
-            <p className="text-muted-foreground py-6 text-center text-sm">(No agents)</p>
+            <p className="text-muted-foreground py-6 text-center text-sm">(no agents)</p>
           ) : (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {agents.map((a) => (
@@ -271,7 +271,7 @@ export default function AgentsPage() {
                     </Badge>
                   )}
                 </SheetTitle>
-                <SheetDescription>{editing.description || "Intents, configurations, visible resources and tools tied"}</SheetDescription>
+                <SheetDescription>{editing.description || "Prompt, config, visible resources and tool bindings"}</SheetDescription>
               </SheetHeader>
               <AgentEditor agentKey={editing.key} onSaved={reload} />
             </>

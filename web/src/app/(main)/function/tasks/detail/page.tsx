@@ -42,6 +42,7 @@ import type { LLMProfile, Task } from "@/lib/types";
 import { AssetsTab } from "./_tabs/assets-tab";
 import { BroadcastTab } from "./_tabs/broadcast-tab";
 import { CoverageGraphTab } from "./_tabs/coverage-graph-tab";
+import { CredentialsTab } from "./_tabs/credentials-tab";
 import { FindingsTab } from "./_tabs/findings-tab";
 import { GraphTab } from "./_tabs/graph-tab";
 import { InterceptTab } from "./_tabs/intercept-tab";
@@ -51,15 +52,16 @@ import { RetestsTab } from "./_tabs/retests-tab";
 import { SessionsTab } from "./_tabs/sessions-tab";
 
 const TABS = [
-  { value: "sessions", label: "Session" },
+  { value: "sessions", label: "Sessions" },
   { value: "overview", label: "Overview" },
   { value: "graph", label: "Exploration graph" },
-  { value: "broadcast", label: "Broadcasts" },
+  { value: "broadcast", label: "Broadcast" },
   { value: "findings", label: "Findings" },
-  { value: "retests", label: "Retest" },
-  { value: "assets", label: "Assessment assets" },
+  { value: "retests", label: "Retests" },
+  { value: "assets", label: "Test assets" },
+  { value: "credentials", label: "Credentials" },
   { value: "coverage", label: "Asset coverage" },
-  { value: "intercept", label: "Intercept approvals" },
+  { value: "intercept", label: "Interception approval" },
   { value: "report", label: "Report" },
 ];
 
@@ -81,8 +83,8 @@ function TaskLLMControl({ task, profiles, onUpdated }: { task: Task; profiles: L
 
   const chain = taskProfileIDs(task);
   const exhausted = task.llm_failover_state === "chain_exhausted";
-  // 任何状态都可以改链,终态也不例外:任务结束后主 Agent 对话仍走这条链,
-  // 链上模型出问题时必须能换掉,否则已完成任务就没法继续交互。
+  // The chain can be edited in any state, terminal included: after the task ends the main agent conversation still uses this chain,
+  // and a broken model on it must be replaceable, or a completed task could no longer be interacted with.
   const terminal = ["done", "failed", "timeout"].includes(task.status);
   // A null active profile on an exhausted, non-empty chain is a persisted end
   // cursor. Keep the status display honest; choosing the first profile is only
@@ -92,17 +94,17 @@ function TaskLLMControl({ task, profiles, onUpdated }: { task: Task; profiles: L
   if (task.active_llm_profile_id) activeID = String(task.active_llm_profile_id);
   const activeProfile = profiles.find((profile) => profile.id === activeID);
   const currentLabel = exhausted
-    ? "The configuration chain is exhausted."
-    : (activeProfile?.name ?? (activeID ? `Profile #${activeID}` : "Follow Default Configuration"));
+    ? "Configuration chain exhausted"
+    : (activeProfile?.name ?? (activeID ? `Config #${activeID}` : "Follow default config"));
   const activeIndex = chain.indexOf(activeID);
   const backupCount = activeIndex >= 0 ? Math.max(0, chain.length - activeIndex - 1) : 0;
-  const currentTitle = [currentLabel, activeProfile?.model, backupCount > 0 ? `${backupCount} fallbacks` : ""]
+  const currentTitle = [currentLabel, activeProfile?.model, backupCount > 0 ? `${backupCount} backups` : ""]
     .filter(Boolean)
     .join(" · ");
-  let editorDescription = "After reordering the order or current configuration, the next LLM call will take effect.";
-  if (terminal) editorDescription = "The mandate is over and the changes affect only the main follow-up Agent dialogue.";
+  let editorDescription = "Changes to the order or the current config take effect from the next LLM call.";
+  if (terminal) editorDescription = "The task has ended; changes only affect subsequent main agent conversations.";
   let saveLabel = "Save";
-  if (exhausted) saveLabel = "Save & Reset";
+  if (exhausted) saveLabel = "Save and reset";
   if (saving) saveLabel = "Saving";
 
   const syncDraft = React.useCallback(() => {
@@ -134,14 +136,14 @@ function TaskLLMControl({ task, profiles, onUpdated }: { task: Task; profiles: L
       } else {
         toast.success(
           result.reopened_intents > 0
-            ? `LLM configuration updated and restored ${result.reopened_intents} intents blocked by quota`
-            : "LLM configuration updated",
+            ? `LLM configs updated and ${result.reopened_intents} quota-blocked intents reopened`
+            : "LLM configs updated",
         );
       }
       setOpen(false);
       onUpdated();
     } catch (error) {
-      toast.error("Update failed:" + (error as Error).message);
+      toast.error("Update failed: " + (error as Error).message);
     } finally {
       setSaving(false);
     }
@@ -153,7 +155,7 @@ function TaskLLMControl({ task, profiles, onUpdated }: { task: Task; profiles: L
         <Button
           size="sm"
           variant={exhausted ? "destructive" : "outline"}
-          aria-label={"View or Switch Tasks LLM Configuration"}
+          aria-label="View or switch the task LLM config"
           title={currentTitle}
         >
           <BrainIcon data-icon="inline-start" />
@@ -163,16 +165,16 @@ function TaskLLMControl({ task, profiles, onUpdated }: { task: Task; profiles: L
       </PopoverTrigger>
       <PopoverContent ref={popoverContentRef} align="start" className="w-[min(28rem,calc(100vw-2rem))] gap-4 p-4">
         <PopoverHeader>
-          <PopoverTitle>Task LLM configuration chain</PopoverTitle>
+          <PopoverTitle>Task LLM config chain</PopoverTitle>
           <PopoverDescription>{editorDescription}</PopoverDescription>
         </PopoverHeader>
 
         {exhausted && (
           <Alert variant="destructive">
             <CircleAlertIcon />
-            <AlertTitle>The configuration chain has been depleted.</AlertTitle>
+            <AlertTitle>Configuration chain quota exhausted</AlertTitle>
             <AlertDescription>
-              {task.llm_failover_reason ?? "All selected configurations are determined to be insufficient. Save the configuration chain to replace the malfunction."}
+              {task.llm_failover_reason ?? "All selected configs were judged to be out of quota. Saving the chain resets the failure state."}
             </AlertDescription>
           </Alert>
         )}
@@ -281,9 +283,9 @@ function TaskDetailInner() {
     try {
       await api.controlTask(id, next ? "pause" : "resume");
       setPaused(next);
-      toast.success(next ? "Discovery Paused" : "Exploration resumed");
+      toast.success(next ? "Exploration paused" : "Exploration resumed");
     } catch (e) {
-      toast.error("Operation failed:" + (e as Error).message);
+      toast.error("Operation failed: " + (e as Error).message);
     }
   }
 
@@ -292,10 +294,10 @@ function TaskDetailInner() {
     setArchiving(true);
     try {
       await api.archiveTask(task.id);
-      toast.success("Task joined archive queue");
+      toast.success("Task queued for archiving");
       router.push("/function/tasks");
     } catch (error) {
-      toast.error(`Archive failed:${(error as Error).message}`);
+      toast.error(`Archive failed: ${(error as Error).message}`);
       setArchiving(false);
     }
   }
@@ -303,11 +305,11 @@ function TaskDetailInner() {
   if (!task) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-3 p-10 text-center">
-        <p className="text-muted-foreground">{loaded ? `Tasks ${id} Deleted, archived or non-existent` : "Loading…"}</p>
+        <p className="text-muted-foreground">{loaded ? `Task ${id} was deleted, archived, or does not exist` : "Loading…"}</p>
         {loaded && (
           <Button asChild variant="outline">
             <Link href="/function/tasks">
-              <ArrowLeftIcon /> Back to tasks
+              <ArrowLeftIcon /> Back to task list
             </Link>
           </Button>
         )}
@@ -319,9 +321,9 @@ function TaskDetailInner() {
   const terminal = ["done", "failed", "timeout"].includes(task.status);
   const archiveLifecycleEligible = terminal || paused || task.status === "paused";
   const canArchive = archiveLifecycleEligible && !task.archive_blocked_by_task_id;
-  let archiveDisabledReason = task.queued ? "Pause queued tasks first" : "Pause running tasks first";
+  let archiveDisabledReason = task.queued ? "Queued tasks must be paused first" : "Running tasks must be paused first";
   if (archiveLifecycleEligible && task.archive_blocked_by_task_id) {
-    archiveDisabledReason = `Job unarchived #${task.archive_blocked_by_task_id} is inherited directly; archive dependent tasks first`;
+    archiveDisabledReason = `The task is directly inherited by unarchived task #${task.archive_blocked_by_task_id}; archive the dependent task first`;
   }
   const engineMode = paused ? "paused" : (task.engine_mode ?? "idle");
   let controlVariant: "default" | "secondary" | "outline" = "outline";
@@ -330,11 +332,11 @@ function TaskDetailInner() {
   if (terminal) {
     controlVariant = "secondary";
     controlIcon = <CheckIcon data-icon="inline-start" />;
-    controlLabel = completed ? "Completed" : "Closed";
+    controlLabel = completed ? "Completed" : "Ended";
   } else if (paused) {
     controlVariant = "default";
     controlIcon = <PlayIcon data-icon="inline-start" />;
-    controlLabel = "Restore";
+    controlLabel = "Resume";
   }
   const archiveTrigger = (
     <Button
@@ -372,10 +374,10 @@ function TaskDetailInner() {
               <AlertDialogTrigger asChild>{archiveTrigger}</AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Archiving #{task.id}？</AlertDialogTitle>
+                  <AlertDialogTitle>Archive task #{task.id}?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Mission mapping, linkage records, monopolization of assets and flows, working papers and LLM
-                    History is compressed to cold storage. The " Archived " page of the task list can be restored when the archive is completed.
+                    The task graph, related records, exclusive assets and traffic, working files, and LLM
+                    history will be compressed into cold storage. Once archiving completes, restore it from the "Archived" tab of the task list.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -437,6 +439,9 @@ function TaskDetailInner() {
         </TabsContent>
         <TabsContent value="assets" className="mt-0">
           <AssetsTab taskId={id} />
+        </TabsContent>
+        <TabsContent value="credentials" className="mt-0">
+          <CredentialsTab taskId={id} />
         </TabsContent>
         <TabsContent value="coverage" className="mt-0">
           <CoverageGraphTab taskId={id} coverageEnabled={task?.coverage_enabled !== false} />

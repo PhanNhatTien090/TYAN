@@ -67,14 +67,14 @@ function Row({
               <span className="truncate font-medium">{findingLabel(f)}</span>
               {f.inherited && f.source_task_id && (
                 <Badge variant="outline" className="shrink-0">
-                  Source#{f.source_task_id} · Read only
+                  Source #{f.source_task_id} · read-only
                 </Badge>
               )}
             </div>
             <span className="truncate text-xs text-muted-foreground">{f.summary}</span>
           </div>
         </button>
-        <Badge variant="outline">Traffic evidence {f.traffic_count ?? 0} records</Badge>
+        <Badge variant="outline">Traffic evidence {f.traffic_count ?? 0}</Badge>
         {f.assets && f.assets.length > 0 && (
           <div className="hidden shrink-0 flex-wrap justify-end gap-1 sm:flex">
             {f.assets.slice(0, 2).map((a) => (
@@ -118,7 +118,7 @@ function Row({
                 : `/function/findings/detail?id=${f.finding_id}`
             }
             className="text-muted-foreground hover:text-primary inline-flex shrink-0 items-center gap-0.5 text-xs"
-            title={"View finding details"}
+            title="View vulnerability details"
           >
             Details
             <ArrowUpRightIcon className="size-3" />
@@ -172,10 +172,10 @@ export function FindingsTab({ taskId }: { taskId: string }) {
     setFindings((cur) => cur.map((x) => (x.id === f.id ? { ...x, status: next } : x)));
     try {
       await api.setFindingStatus(f.finding_id, next);
-      toast.success(`Marked as '${statusMeta("finding", next).label}」`);
+      toast.success(`Marked as "${statusMeta("finding", next).label}"`);
     } catch (e) {
       setFindings((cur) => cur.map((x) => (x.id === f.id ? { ...x, status: prev } : x)));
-      toast.error("Update failed:" + (e as Error).message);
+      toast.error("Update failed: " + (e as Error).message);
     }
   }, []);
 
@@ -195,7 +195,7 @@ export function FindingsTab({ taskId }: { taskId: string }) {
           <button
             type="button"
             className="inline-flex items-center gap-1 outline-none focus-visible:underline"
-            aria-label={`Discovery time: current${sortPreference.direction === "asc" ? "Ascending" : "Descending"}, click to reverse sort order`}
+            aria-label={`Discovery time currently ${sortPreference.direction === "asc" ? "ascending" : "descending"}, click to toggle sort direction`}
             onClick={() =>
               setSortPreference((current) => ({
                 field: "time",
@@ -203,7 +203,7 @@ export function FindingsTab({ taskId }: { taskId: string }) {
               }))
             }
           >
-            <span>Discovered</span>
+            <span>Discovery time</span>
             {sortPreference.direction === "asc" ? (
               <ArrowUpIcon className="size-3.5" />
             ) : (
@@ -215,7 +215,7 @@ export function FindingsTab({ taskId }: { taskId: string }) {
           <Row key={f.id} f={f} contextTaskId={taskId} onStatus={onStatus} />
         ))}
         {items.length === 0 && (
-          <p className="px-4 py-8 text-center text-sm text-muted-foreground">This mandate, and its direct link, has not yet been identified.</p>
+          <p className="px-4 py-8 text-center text-sm text-muted-foreground">No confirmed findings yet for this task or its directly linked tasks.</p>
         )}
       </CardContent>
     </Card>

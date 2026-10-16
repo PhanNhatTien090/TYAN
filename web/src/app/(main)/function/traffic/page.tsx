@@ -249,14 +249,14 @@ export default function TrafficPage() {
     [hosts, hostCountSortDirection],
   );
 
-  // "清空" for the unfiltered purge, "删除" for the host-scoped ones — the dialog's
+  // "Purge" for the unfiltered purge, "Delete" for the host-scoped ones — the dialog's
   // title and its confirm button both follow from which is in play.
-  const deleteVerb = deleteMode === "all" ? "Clear" : "Delete";
+  const deleteVerb = deleteMode === "all" ? "Purge" : "Delete";
   const deleteTitle = deleteMode
     ? {
-        all: "Empty all traffic records?",
-        selected: `Delete the selected ${selectedHosts.length} All the traffic from a target?`,
-        filter: "Delete all traffic from the target?",
+        all: "Purge all traffic records?",
+        selected: `Delete all traffic for the ${selectedHosts.length} selected targets?`,
+        filter: "Delete all traffic for this target?",
       }[deleteMode]
     : "";
 
@@ -284,15 +284,15 @@ export default function TrafficPage() {
         if (mode === "all") {
           // Reclaimed space is the whole point of compacting an emptied index, so say so.
           const reclaimed = r.reclaimed ?? 0;
-          const freed = reclaimed > 0 ? `Release. ${fmtBytes(reclaimed)} Storage` : "";
-          toast.success(`emptied ${r.deleted} traffic records${freed}`);
+          const freed = reclaimed > 0 ? `, freeing ${fmtBytes(reclaimed)} of storage` : "";
+          toast.success(`Purged ${r.deleted} traffic records${freed}`);
         }
         setPage(0);
         setReloadTick((t) => t + 1);
       })
       .catch((e) => {
         // Keep the confirmation open so the user can retry a failed deletion.
-        if (mode === "all") toast.error(`Failed to clear:${(e as Error).message}`);
+        if (mode === "all") toast.error(`Purge failed: ${(e as Error).message}`);
       })
       .finally(() => setDeleting(false));
   };
@@ -312,7 +312,7 @@ export default function TrafficPage() {
         if (alive) setDetail(d);
       })
       .catch(() => {
-        if (alive) setDetail({ req: "(Can not load the message)", resp: "" });
+        if (alive) setDetail({ req: "(failed to load the messages)", resp: "" });
       })
       .finally(() => {
         if (alive) setDetailLoading(false);
@@ -342,7 +342,7 @@ export default function TrafficPage() {
       <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-xl font-semibold tracking-tight">Traffic</h1>
-          <p className="text-muted-foreground text-sm">Global Recording Agent All HTTP Exchanges</p>
+          <p className="text-muted-foreground text-sm">Global recording proxy · all HTTP traffic</p>
         </div>
         <div className="flex items-center gap-4 text-sm">
           <span
@@ -358,7 +358,7 @@ export default function TrafficPage() {
           </span>
           {traffic?.proxy && <span className="font-mono text-xs text-muted-foreground">{traffic.proxy}</span>}
           <span className="text-xs text-muted-foreground">
-            Total <span className="tabular-nums">{traffic?.count ?? 0}</span> records
+            <span className="tabular-nums">{traffic?.count ?? 0}</span> records
           </span>
         </div>
       </div>
@@ -369,7 +369,7 @@ export default function TrafficPage() {
           <PopoverTrigger asChild>
             <Button variant="outline" size="sm" className="h-8">
               <ListChecksIcon className="size-3.5" />
-              {selectedHosts.length > 0 ? `Select targets (${selectedHosts.length}）` : "Select Target..."}
+              {selectedHosts.length > 0 ? `Select targets (${selectedHosts.length})` : "Select targets…"}
             </Button>
           </PopoverTrigger>
           <PopoverContent
@@ -378,7 +378,7 @@ export default function TrafficPage() {
             collisionPadding={16}
           >
             <div className="flex items-center justify-between border-b px-3 py-2">
-              <span className="text-xs font-medium text-muted-foreground">Remove by Target Batch</span>
+              <span className="text-xs font-medium text-muted-foreground">Batch delete by target</span>
               <div className="flex items-center gap-1">
                 {hosts.length > 0 && (
                   <Tooltip>
@@ -389,14 +389,14 @@ export default function TrafficPage() {
                         onClick={() => setHostCountSortDirection((current) => (current === "desc" ? "asc" : "desc"))}
                         aria-label={
                           hostCountSortDirection === "desc"
-                            ? "The number of packages is currently in reverse and click to switch to the correct order"
-                            : "The number of packets is currently in the right order, click to switch to reverse"
+                            ? "Packet count is currently descending; click to switch to ascending"
+                            : "Packet count is currently ascending; click to switch to descending"
                         }
                       >
                         {hostCountSortDirection === "desc" ? <ArrowDownWideNarrowIcon /> : <ArrowUpNarrowWideIcon />}
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent>Number of data packages{hostCountSortDirection === "desc" ? "Descending" : "Ascending"}</TooltipContent>
+                    <TooltipContent>By packet count, {hostCountSortDirection === "desc" ? "descending" : "ascending"}</TooltipContent>
                   </Tooltip>
                 )}
                 {hosts.length > 0 && (
@@ -406,14 +406,14 @@ export default function TrafficPage() {
                     className="h-6 px-2 text-xs"
                     onClick={() => setSelectedHosts(allSelected ? [] : hosts.map((h) => h.host))}
                   >
-                    {allSelected ? "Unselect" : "Select All"}
+                    {allSelected ? "Clear all" : "Select all"}
                   </Button>
                 )}
               </div>
             </div>
             <div className="max-h-64 overflow-y-auto">
               {hosts.length === 0 ? (
-                <div className="px-3 py-6 text-center text-xs text-muted-foreground">No traffic records at this time</div>
+                <div className="px-3 py-6 text-center text-xs text-muted-foreground">No traffic records</div>
               ) : (
                 sortedHosts.map((h, index) => (
                   <label
@@ -447,7 +447,7 @@ export default function TrafficPage() {
                   setPickerOpen(false);
                 }}
               >
-                Delete Selected{selectedHosts.length}）
+                Delete selected ({selectedHosts.length})
               </Button>
             </div>
           </PopoverContent>
@@ -460,29 +460,29 @@ export default function TrafficPage() {
           size="sm"
           className="h-8"
           disabled={!hostQ || deleting}
-          title={hostQ ? undefined : "Select the target or type host on the left first"}
+          title={hostQ ? undefined : "Select a target on the left or enter a host first"}
           onClick={() => setDeleteMode("filter")}
         >
           <Trash2Icon className="size-3.5" />
-          Delete the target
+          Delete this target
         </Button>
         {/* Outline rather than a second destructive button: this one ignores every
-            filter, so it must not look one mis-click away from "删除该目标". */}
+            filter, so it must not look one mis-click away from "Delete this target". */}
         <Button
           variant="outline"
           size="sm"
           className="h-8 text-destructive hover:bg-destructive/10 hover:text-destructive"
           disabled={!traffic?.count || deleting}
-          title={traffic?.count ? "Remove all traffic and compact storage" : "No traffic currently recorded"}
+          title={traffic?.count ? "Delete all traffic and compact storage" : "No traffic records yet"}
           onClick={() => setDeleteMode("all")}
         >
           <EraserIcon className="size-3.5" />
-          Empty All
+          Purge all
         </Button>
         <div className="relative max-w-sm flex-1">
           <SearchIcon className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder={"Search all (URL/ Method / Type / Status Code...)"}
+            placeholder="Search everything (URL / method / type / status…)"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             className="h-8 pl-8"
@@ -490,7 +490,7 @@ export default function TrafficPage() {
         </div>
         <Select value={method} onValueChange={setMethod}>
           <SelectTrigger size="sm" className="w-32">
-            <SelectValue placeholder={"Method"} />
+            <SelectValue placeholder="Method" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All methods</SelectItem>
@@ -544,10 +544,10 @@ export default function TrafficPage() {
 
       {/* Advanced filters (issue #177): narrow 660k+ exchanges down to the one packet. */}
       <div className="flex flex-wrap items-center gap-2 rounded-md border bg-muted/30 px-2 py-1.5">
-        <span className="pl-1 text-xs font-medium text-muted-foreground">Advanced Filter</span>
+        <span className="pl-1 text-xs font-medium text-muted-foreground">Advanced filters</span>
         <div className="relative w-56">
           <Input
-            placeholder={"Response content (main keywords,  ⁇ 3 words)"}
+            placeholder="Response content (body keyword, ≥3 chars)"
             value={body}
             onChange={(e) => setBody(e.target.value)}
             className="h-8"
@@ -555,7 +555,7 @@ export default function TrafficPage() {
         </div>
         <div className="relative w-52">
           <Input
-            placeholder={"Path (e. g. /api/user/...)"}
+            placeholder="Path (e.g. /api/user/…)"
             value={path}
             onChange={(e) => setPath(e.target.value)}
             className="h-8"
@@ -563,10 +563,10 @@ export default function TrafficPage() {
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger size="sm" className="w-28">
-            <SelectValue placeholder={"Status code"} />
+            <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Status Codes</SelectItem>
+            <SelectItem value="all">All statuses</SelectItem>
             {STATUS_BUCKETS.map((s) => (
               <SelectItem key={s} value={s}>
                 {s}
@@ -579,7 +579,7 @@ export default function TrafficPage() {
           <Input
             type="number"
             min={0}
-            placeholder={"Min (bytes)"}
+            placeholder="Min (B)"
             value={respMin}
             onChange={(e) => setRespMin(e.target.value)}
             className="h-8 w-24"
@@ -588,7 +588,7 @@ export default function TrafficPage() {
           <Input
             type="number"
             min={0}
-            placeholder={"Max (bytes)"}
+            placeholder="Max (B)"
             value={respMax}
             onChange={(e) => setRespMax(e.target.value)}
             className="h-8 w-24"
@@ -603,13 +603,13 @@ export default function TrafficPage() {
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        <span className="text-sm text-muted-foreground">Selected {selectedFlows.size} traffic records</span>
+        <span className="text-sm text-muted-foreground">{selectedFlows.size} flows selected</span>
         <Button variant="outline" size="sm" disabled={selectedFlows.size === 0} onClick={() => setLinking(true)}>
           Link to finding
         </Button>
         {selectedFlows.size > 0 ? (
           <Button variant="ghost" size="sm" onClick={() => setSelectedFlows(new Set())}>
-            Empty Selection
+            Clear selection
           </Button>
         ) : null}
       </div>
@@ -622,7 +622,7 @@ export default function TrafficPage() {
                 <TableRow>
                   <TableHead className="w-10">
                     <Checkbox
-                      aria-label={"Select this page flow"}
+                      aria-label="Select this page's traffic"
                       checked={exchanges.length > 0 && exchanges.every((e) => selectedFlows.has(e.id))}
                       onCheckedChange={(checked) =>
                         setSelectedFlows((previous) => {
@@ -638,7 +638,7 @@ export default function TrafficPage() {
                   </TableHead>
                   <SortableHead
                     field="ts"
-                    label={"Time"}
+                    label="Time"
                     activeField={sort.field}
                     direction={sort.direction}
                     onSort={toggleSort}
@@ -649,7 +649,7 @@ export default function TrafficPage() {
                   <TableHead>URL</TableHead>
                   <SortableHead
                     field="status"
-                    label={"Status code"}
+                    label="Status"
                     activeField={sort.field}
                     direction={sort.direction}
                     onSort={toggleSort}
@@ -658,7 +658,7 @@ export default function TrafficPage() {
                   <TableHead className="w-36">content-type</TableHead>
                   <SortableHead
                     field="resp_len"
-                    label={"Response size"}
+                    label="Response size"
                     activeField={sort.field}
                     direction={sort.direction}
                     onSort={toggleSort}
@@ -676,7 +676,7 @@ export default function TrafficPage() {
                   >
                     <TableCell>
                       <Checkbox
-                        aria-label={`Select flow ${e.id}`}
+                        aria-label={`Select traffic ${e.id}`}
                         checked={selectedFlows.has(e.id)}
                         onClick={(event) => event.stopPropagation()}
                         onCheckedChange={(checked) =>
@@ -709,7 +709,7 @@ export default function TrafficPage() {
                 {exchanges.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={8} className="py-12 text-center text-sm text-muted-foreground">
-                      {traffic === null ? "Loading…" : "No match for traffic."}
+                      {traffic === null ? "Loading…" : "No matching traffic."}
                     </TableCell>
                   </TableRow>
                 )}
@@ -750,7 +750,7 @@ export default function TrafficPage() {
                   {detailLoading ? (
                     <div className="flex items-center gap-2 p-5 text-xs text-muted-foreground">
                       <Loader2Icon className="size-3.5 animate-spin" />
-                      Loading exchange…
+                      Loading messages…
                     </div>
                   ) : (
                     <HttpCodeBlock raw={requestWithHost(detail?.req ?? "", selected)} />
@@ -760,7 +760,7 @@ export default function TrafficPage() {
                   {detailLoading ? (
                     <div className="flex items-center gap-2 p-5 text-xs text-muted-foreground">
                       <Loader2Icon className="size-3.5 animate-spin" />
-                      Loading exchange…
+                      Loading messages…
                     </div>
                   ) : (
                     <HttpCodeBlock raw={detail?.resp ?? ""} />
@@ -784,28 +784,28 @@ export default function TrafficPage() {
             <AlertDialogDescription>
               {deleteMode === "all" && (
                 <>
-                  Remove All permanently <span className="font-semibold tabular-nums">{traffic?.count ?? 0}</span>{" "}
-                  A record of traffic (including requests/responses in the original language) that ignores the current screening conditions is irrevocable. The information on traffic bound to a loophole is kept in a stand-alone repository and is not affected.
+                  This will permanently delete all <span className="font-semibold tabular-nums">{traffic?.count ?? 0}</span>{" "}
+                  traffic records (including raw requests/responses), ignoring the current filters. This action cannot be undone. Traffic evidence already bound to findings lives in a separate evidence store and is unaffected.
                   <br />
                   <span className="text-muted-foreground">
-                    When emptied, the disk space occupied by the index will be stored in a series of presses and returned to the system; the flow recording will be temporarily suspended during this period.
+                    Purging also compacts storage, returning the index's disk space to the system; traffic recording pauses briefly during this time.
                   </span>
                 </>
               )}
               {deleteMode === "selected" && (
                 <>
-                  Permanently delete <span className="font-semibold tabular-nums">{selectedHosts.length}</span> Goals (%)
+                  This will permanently delete all traffic records for <span className="font-semibold tabular-nums">{selectedHosts.length}</span> targets (
                   <span className="font-mono">
-                    {selectedHosts.slice(0, 3).join("、")}
+                    {selectedHosts.slice(0, 3).join(", ")}
                     {selectedHosts.length > 3 ? "…" : ""}
                   </span>
-                  ) All traffic records (including requests/responses), which cannot be revoked.
+                  ), including raw requests/responses. This action cannot be undone.
                 </>
               )}
               {deleteMode === "filter" && (
                 <>
-                  Remove host inclusion permanently <span className="font-mono font-semibold">{hostQ}</span>{" "}
-                  All traffic records (including requests/responses), which are irrevocable.
+                  This will permanently delete all traffic records for hosts containing <span className="font-mono font-semibold">{hostQ}</span>{" "}
+                  (including raw requests/responses). This action cannot be undone.
                 </>
               )}
             </AlertDialogDescription>
@@ -820,7 +820,7 @@ export default function TrafficPage() {
               disabled={deleting}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {deleting ? `${deleteVerb}Medium...` : `Confirm.${deleteVerb}`}
+              {deleting ? `${deleteVerb}…` : `Confirm ${deleteVerb}`}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

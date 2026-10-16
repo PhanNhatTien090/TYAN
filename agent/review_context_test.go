@@ -26,7 +26,7 @@ func TestWorkerReviewContextAcrossToolCalls(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { _ = d.Close() })
-	expID, err := d.CreateExploration("只操作隔离测试目录", "验证创建和清理")
+	expID, err := d.CreateExploration("only operate in the isolated test directory", "verify creation and cleanup")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -79,14 +79,14 @@ func TestWorkerReviewContextAcrossToolCalls(t *testing.T) {
 	probe := tool.Build(tool.Spec{Name: probeName, Schema: map[string]any{"type": "object"},
 		Run: func(context.Context, json.RawMessage, *tool.ToolContext) (tool.Result, error) {
 			executions++
-			_, err := ts.AddConstraint("deny", "禁止后续清理", "human")
+			_, err := ts.AddConstraint("deny", "no further cleanup allowed", "human")
 			return tool.Text("Created a new fixture; no existing file overwritten."), err
 		},
 	})
 	workDir := t.TempDir()
 	ctx := intercept.WithTaskContext(t.Context(), taskID, "test-agent", nil)
 	ctx = intercept.WithReviewContext(ctx, "/parent", intercept.ReviewBackground{Source: intercept.BackgroundUserMessage, Text: "PARENT_BACKGROUND_SENTINEL"})
-	intentPayload := map[string]any{"summary": "创建并清理", "extra": "FULL_INTENT_SENTINEL"}
+	intentPayload := map[string]any{"summary": "create and clean up", "extra": "FULL_INTENT_SENTINEL"}
 	intentID, err := ts.AddNode("intent", intentPayload, 0, "running", "planner", nil)
 	if err != nil {
 		t.Fatal(err)
@@ -103,11 +103,11 @@ func TestWorkerReviewContextAcrossToolCalls(t *testing.T) {
 	}
 	first, second := inputs[0], inputs[1]
 	for _, in := range inputs {
-		if in.Version != 4 || in.Background != nil || in.WorkingDir != runDir {
+		if in.Version != 5 || in.Background != nil || in.WorkingDir != runDir {
 			t.Fatalf("unexpected Worker background: %+v", in)
 		}
 		raw, _ := json.Marshal(in)
-		for _, forbidden := range []string{"创建并清理", "PARENT_BACKGROUND_SENTINEL", `"background"`, "只操作隔离测试目录", "验证创建和清理", "禁止后续清理", "FULL_INTENT_SENTINEL", "全局探索态势", `"task_id"`, `"task"`, `"turn_input"`, `"worker_intent"`, `"history"`, `"history_truncated"`, `"correlation"`, "Created a new fixture"} {
+		for _, forbidden := range []string{"create and clean up", "PARENT_BACKGROUND_SENTINEL", `"background"`, "only operate in the isolated test directory", "verify creation and cleanup", "no further cleanup allowed", "FULL_INTENT_SENTINEL", "Global exploration overview", `"task_id"`, `"task"`, `"turn_input"`, `"worker_intent"`, `"history"`, `"history_truncated"`, `"correlation"`, "Created a new fixture"} {
 			if strings.Contains(string(raw), forbidden) {
 				t.Fatalf("unexpected review data: %s", forbidden)
 			}
@@ -131,10 +131,10 @@ func TestWorkerReviewContextAcrossToolCalls(t *testing.T) {
 			t.Fatalf("verdict lost model input: %+v err=%v", detail, err)
 		}
 		var saved intercept.ReviewInput
-		if json.Unmarshal(detail.Audit.ModelInput, &saved) != nil || saved.Background != nil || saved.Version != 4 {
+		if json.Unmarshal(detail.Audit.ModelInput, &saved) != nil || saved.Background != nil || saved.Version != 5 {
 			t.Fatal("stored Worker review input retained a background")
 		}
-		if row.Status == "allowed" && (detail.Audit.ExecutionStatus != "succeeded" || saved.Version != 4) {
+		if row.Status == "allowed" && (detail.Audit.ExecutionStatus != "succeeded" || saved.Version != 5) {
 			t.Fatal("automatic allow lost execution result or its original background snapshot")
 		}
 		if detail.Audit.Correlation != "exact" {

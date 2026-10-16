@@ -132,7 +132,7 @@ export function HttpCodeBlock({ raw }: { raw: string }) {
       setCopied(true);
       return;
     }
-    toast.error("Copy failed, copy after Ctrl/ Cmd+A");
+    toast.error("Copy failed; use Ctrl/Cmd+A then copy");
   };
 
   const renderLine = (line: string, index: number) => {
@@ -151,14 +151,14 @@ export function HttpCodeBlock({ raw }: { raw: string }) {
               type="button"
               variant="ghost"
               size="icon-xs"
-              aria-label={wrapLines ? "Close Automatic Line Break" : "Enable automatic line breaks"}
+              aria-label={wrapLines ? "Disable word wrap" : "Enable word wrap"}
               aria-pressed={wrapLines}
               onClick={() => setWrapLines((current) => !current)}
             >
               <WrapTextIcon />
             </Button>
           </TooltipTrigger>
-          <TooltipContent side="bottom">{wrapLines ? "Close Automatic Line Break" : "Enable automatic line breaks"}</TooltipContent>
+          <TooltipContent side="bottom">{wrapLines ? "Disable word wrap" : "Enable word wrap"}</TooltipContent>
         </Tooltip>
         <Tooltip>
           <TooltipTrigger asChild>
@@ -166,19 +166,19 @@ export function HttpCodeBlock({ raw }: { raw: string }) {
               type="button"
               variant="ghost"
               size="icon-xs"
-              aria-label={copied ? "Exchange copied" : "Copy exchange"}
+              aria-label={copied ? "Message copied" : "Copy message"}
               onClick={() => void copyPacket()}
             >
               {copied ? <CheckIcon /> : <CopyIcon />}
             </Button>
           </TooltipTrigger>
-          <TooltipContent side="bottom">{copied ? "Copied" : "Copy exchange"}</TooltipContent>
+          <TooltipContent side="bottom">{copied ? "Copied" : "Copy message"}</TooltipContent>
         </Tooltip>
       </div>
       {/* biome-ignore lint/a11y/useSemanticElements: textarea cannot preserve line numbers and syntax-highlighting markup. */}
       <div
         role="textbox"
-        aria-label={"HTTP message code"}
+        aria-label="HTTP message code"
         aria-multiline="true"
         aria-readonly="true"
         tabIndex={0}

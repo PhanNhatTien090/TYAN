@@ -14,6 +14,11 @@ The original ARTEX authors and contributors retain their credits. See [LICENSE](
 
 > **For learning and security research in an isolated local lab only. Using TYAN to violate the law, access systems without permission, steal data, disrupt services, or harm others is strictly prohibited.** Installing or possessing this software does not grant permission to access any system. The upstream restrictions below also apply, including the prohibition on real-world testing against online or networked systems, even when owned or authorized.
 
+## Additional lab workflows
+
+Task schedules, finding cases, encrypted test-account credentials, operator handoff, an optional access gate, and a privacy-restricted local capture extension are now included. See [feature locations, setup and upgrade notes](FEATURES.md) before use. Existing usage restrictions still apply.
+
+
 ## Interface preview
 
 ![TYAN dashboard with sample data](screenshots/tyan-dashboard.png)

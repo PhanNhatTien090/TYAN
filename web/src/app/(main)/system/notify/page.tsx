@@ -32,10 +32,10 @@ import { ConfigField, FilterSummary } from "./_components/channel-form";
 import { DeliveryList } from "./_components/delivery-list";
 import { formatBacklog, StatTile } from "./_components/stat-tile";
 
-// 本页只负责编排：加载数据、维护表单状态、调用接口。
-// 字段定义与解析在 _components/channel-fields.ts，控件与过滤摘要在
-// _components/channel-form.tsx，投递记录在 _components/delivery-list.tsx——
-// 拆开是因为它们各自能被单独读懂，而挤在一个文件里时这个页面接近 1100 行。
+// This page only orchestrates: loading data, holding form state, calling the API.
+// Field definitions and parsing live in _components/channel-fields.ts, controls and the filter summary in
+// _components/channel-form.tsx, and the delivery log in _components/delivery-list.tsx —
+// they are split out because each stays readable on its own, whereas crammed into one file this page neared 1100 lines.
 export default function NotifyPage() {
   const [meta, setMeta] = React.useState<NotificationMeta | null>(null);
   const [channels, setChannels] = React.useState<NotificationChannel[]>([]);
@@ -59,13 +59,13 @@ export default function NotifyPage() {
         setBaseURL(m.public_base_url);
         setDigestMin(m.digest_interval_min);
       })
-      .catch((e) => toast.error("Failed to load notification settings:" + (e as Error).message));
-    // 渠道列表加载失败要报出来：静默失败会显示成「一个渠道都没有」，
-    // 用户会以为配置丢了，比直接报错更让人慌。
+      .catch((e) => toast.error("Failed to load notification settings: " + (e as Error).message));
+    // Channel-list load failures must be reported: failing silently would render as "no channels at all",
+    // and users would think their config was lost — scarier than a straight-up error.
     api
       .notifyChannels()
       .then(setChannels)
-      .catch((e) => toast.error("Reading channel list failed:" + (e as Error).message));
+      .catch((e) => toast.error("Failed to load channels: " + (e as Error).message));
   }, []);
   React.useEffect(() => {
     load();
@@ -86,7 +86,7 @@ export default function NotifyPage() {
 
   function openEdit(ch: NotificationChannel) {
     setEditing(ch);
-    // filter 在后端是 Go 结构体，永远序列化成对象（不会是 null），所以不需要兜底。
+    // filter is a Go struct on the backend and always serializes as an object (never null), so no fallback is needed.
     const f = ch.filter;
     setForm({
       name: ch.name,
@@ -94,8 +94,8 @@ export default function NotifyPage() {
       mode: ch.mode,
       enabled: ch.enabled,
       ratePerMin: String(ch.rate_per_min),
-      // 后端回显的 config 里凭据是掩码值；原样放进表单，提交时原样送回，
-      // 后端据此保留库中原值。
+      // Credentials in the backend-echoed config are masked values; put them into the form as-is and send them back as-is on submit,
+      // which tells the backend to keep the stored values.
       config: { ...ch.config },
       minSeverity: f.min_severity ?? "",
       includeText: (f.vulnclass_include ?? []).join("\n"),
@@ -107,17 +107,17 @@ export default function NotifyPage() {
     setOpen(true);
   }
 
-  // buildConfig 把表单状态转成渠道 config。
+  // buildConfig turns form state into the channel config.
   //
-  // 唯一的规则，两类值：
-  //   - 掩码值（"__masked__..."）原样送回 → 后端解读为「这个字段没改，保留库中原值」
-  //   - 其余一律按用户输入提交，空串即「清空该字段」
+  // One rule, two kinds of values:
+  //   - masked values ("__masked__...") are sent back verbatim → the backend reads this as "field unchanged, keep the stored value"
+  //   - everything else is submitted as user input, where an empty string means "clear this field"
   //
-  // 之所以不特殊照顾凭据字段（比如「凭据留空就跳过」），是因为那会让用户**无法清除**
-  // 一个设错的密钥——界面上没有任何操作能表达「我要把它删掉」。现在的规则下，
-  // 清空输入框就等于清空该字段，语义唯一且用户可控。
-  // 掩码值不会出现在输入框里（见 ConfigField），所以「框里有字」永远等于
-  // 「用户主动填的」。
+  // Credential fields get no special treatment (no "skip when empty") because that would make it **impossible** to clear
+  // a mis-set key — no action in the UI could express "I want this gone". Under the current rule,
+  // emptying the input equals clearing the field: one unambiguous, user-controlled semantic.
+  // Masked values never appear in inputs (see ConfigField), so "text in the box" always means
+  // "the user typed it".
   function buildConfig(): Record<string, unknown> {
     const defs = CHANNEL_FIELDS[form.kind] ?? [];
     const out: Record<string, unknown> = {};
@@ -142,7 +142,7 @@ export default function NotifyPage() {
       }
       if (d.kind === "list") {
         out[d.key] = String(raw ?? "")
-          .split(/[\s,，]+/)
+          .split(/[\s,]+/)
           .map((s) => s.trim())
           .filter(Boolean);
         continue;
@@ -165,7 +165,7 @@ export default function NotifyPage() {
 
   async function saveForm() {
     if (!form.name.trim()) {
-      toast.error("Please fill in your channel name.");
+      toast.error("Please fill in a channel name");
       return;
     }
     setSaving(true);
@@ -185,12 +185,12 @@ export default function NotifyPage() {
         setOpen(false);
       } else {
         await api.notifyCreateChannel(payload);
-        toast.success("Added Channel");
+        toast.success("Channel added");
         setOpen(false);
       }
       load();
     } catch (e) {
-      toast.error("Failed to save:" + (e as Error).message);
+      toast.error("Save failed: " + (e as Error).message);
     } finally {
       setSaving(false);
     }
@@ -201,10 +201,10 @@ export default function NotifyPage() {
     setTesting(true);
     try {
       const r = await api.notifyTestChannel(editing.id);
-      toast.success(`Test message sent (${r.latency_ms} ms). Check the destination for delivery.`);
+      toast.success(`Test message sent (${r.latency_ms} ms); check the group to confirm`);
     } catch (e) {
-      // 后端把渠道返回的原始错误如实回传，这是排查配置的唯一线索，原样展示。
-      toast.error("Test failed:" + (e as Error).message, { duration: 12000 });
+      // The backend relays the raw error returned by the channel verbatim — the only clue for debugging the config — so show it as-is.
+      toast.error("Test failed: " + (e as Error).message, { duration: 12000 });
     } finally {
       setTesting(false);
     }
@@ -213,11 +213,11 @@ export default function NotifyPage() {
   async function removeChannel(ch: NotificationChannel) {
     try {
       await api.notifyDeleteChannel(ch.id);
-      toast.success(`Deleted:${ch.name}`);
+      toast.success(`Deleted: ${ch.name}`);
       setOpen(false);
       load();
     } catch (e) {
-      toast.error("Failed to delete:" + (e as Error).message);
+      toast.error("Delete failed: " + (e as Error).message);
     }
   }
 
@@ -226,7 +226,7 @@ export default function NotifyPage() {
       await api.notifyUpdateChannel(ch.id, { enabled: !ch.enabled });
       load();
     } catch (e) {
-      toast.error("Operation failed:" + (e as Error).message);
+      toast.error("Operation failed: " + (e as Error).message);
     }
   }
 
@@ -235,9 +235,9 @@ export default function NotifyPage() {
     try {
       await api.setSettings({ notify_enabled: on });
       setMeta((m) => (m ? { ...m, enabled: on } : m));
-      toast.success(on ? "Notifications enabled" : "Notifications paused");
+      toast.success(on ? "Push enabled" : "Push paused");
     } catch (e) {
-      toast.error("Operation failed:" + (e as Error).message);
+      toast.error("Operation failed: " + (e as Error).message);
     } finally {
       setGlobalSaving(false);
     }
@@ -253,15 +253,15 @@ export default function NotifyPage() {
       toast.success("Saved");
       load();
     } catch (e) {
-      toast.error("Failed to save:" + (e as Error).message);
+      toast.error("Save failed: " + (e as Error).message);
     } finally {
       setGlobalSaving(false);
     }
   }
 
   const fields = CHANNEL_FIELDS[form.kind] ?? [];
-  const secretKeys = new Set(meta?.kinds?.find((k) => k.kind === form.kind)?.secret_keys ?? []);
-  const defaultRate = meta?.kinds?.find((k) => k.kind === form.kind)?.default_rate_per_min ?? 0;
+  const secretKeys = new Set(meta?.kinds.find((k) => k.kind === form.kind)?.secret_keys ?? []);
+  const defaultRate = meta?.kinds.find((k) => k.kind === form.kind)?.default_rate_per_min ?? 0;
 
   return (
     <div className="flex flex-1 flex-col gap-4 md:gap-6">
@@ -269,19 +269,19 @@ export default function NotifyPage() {
         <div>
           <h1 className="text-xl font-semibold tracking-tight">Notifications</h1>
           <p className="text-muted-foreground text-sm">
-            Send finding notifications to DingTalk, Feishu, WeCom, webhooks, or email. Configure delivery timing and filters for each channel.
+            Push findings to DingTalk / Feishu / WeCom and other channels · each channel has its own delivery timing and filter rules
           </p>
         </div>
         {meta && (
-          // 用 div 而不是 label：Switch 自带 aria-label，外面再套一层 label
-          // 既关联不到任何原生控件，又会让点击文字看起来应该能切换。
+          // A div, not a label: the Switch carries its own aria-label, and wrapping it in a label
+          // would associate it with no native control while making the text look like it should toggle.
           <div className="flex shrink-0 items-center gap-2 text-sm">
             <span className="text-muted-foreground">Master switch</span>
             <Switch
               checked={meta.enabled}
               disabled={globalSaving}
               onCheckedChange={toggleGlobal}
-              aria-label={"Enable notifications"}
+              aria-label="Push master switch"
             />
           </div>
         )}
@@ -289,15 +289,15 @@ export default function NotifyPage() {
 
       {meta && (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-          <StatTile label={"Channels"} value={`${meta.stats.channels_on} / ${meta.stats.channels}`} hint={"Enable / Total"} />
-          <StatTile label={"Delivered today"} value={String(meta.stats.sent_today)} />
-          <StatTile label={"To be sent"} value={String(meta.stats.pending)} />
-          <StatTile label={"Failed"} value={String(meta.stats.failed)} tone={meta.stats.failed > 0 ? "red" : undefined} />
+          <StatTile label="Channels" value={`${meta.stats.channels_on} / ${meta.stats.channels}`} hint="On / total" />
+          <StatTile label="Sent today" value={String(meta.stats.sent_today)} />
+          <StatTile label="Pending" value={String(meta.stats.pending)} />
+          <StatTile label="Failed" value={String(meta.stats.failed)} tone={meta.stats.failed > 0 ? "red" : undefined} />
           <StatTile
-            label={"Longest backlog"}
+            label="Oldest backlog"
             value={formatBacklog(meta.stats.backlog_age_ms)}
-            // 积压年龄比积压条数有用得多：积压 3 条可以是从 3 秒到 3 小时。
-            hint={meta.stats.backlog_age_ms > 5 * 60_000 ? "It's probably stuck." : undefined}
+            // Backlog age is far more useful than backlog count: 3 backlogged items could mean 3 seconds or 3 hours.
+            hint={meta.stats.backlog_age_ms > 5 * 60_000 ? "Push may be stuck" : undefined}
             tone={meta.stats.backlog_age_ms > 5 * 60_000 ? "red" : undefined}
           />
         </div>
@@ -305,21 +305,21 @@ export default function NotifyPage() {
 
       <Card className="gap-3">
         <CardHeader>
-          <CardTitle className="text-base">Global Settings</CardTitle>
+          <CardTitle className="text-base">Global settings</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
           <div className="grid gap-2">
-            <Label htmlFor="n-base">Backlink Address</Label>
+            <Label htmlFor="n-base">Link-back URL</Label>
             <Input
               id="n-base"
               placeholder="https://artex.example.com"
               value={baseURL}
               onChange={(e) => setBaseURL(e.target.value)}
             />
-            <p className="text-muted-foreground text-xs">Message 'See details' button points to the address. Leave empty without the button.</p>
+            <p className="text-muted-foreground text-xs">The address the "View details" button in messages points to. Leave empty to omit the button.</p>
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="n-digest">Summary cycle (minutes)</Label>
+            <Label htmlFor="n-digest">Digest interval (minutes)</Label>
             <Input
               id="n-digest"
               type="number"
@@ -329,11 +329,11 @@ export default function NotifyPage() {
               value={digestMin}
               onChange={(e) => setDigestMin(e.target.value)}
             />
-            <p className="text-muted-foreground text-xs">It is only effective for the "summary" mode.</p>
+            <p className="text-muted-foreground text-xs">Only applies to channels in "digest" mode.</p>
           </div>
           <div className="sm:col-span-2">
             <Button onClick={saveGlobal} disabled={globalSaving}>
-              Save Global Settings
+              Save global settings
             </Button>
           </div>
         </CardContent>
@@ -342,7 +342,7 @@ export default function NotifyPage() {
       <Tabs value={tab} onValueChange={(v) => setTab(v as "channels" | "deliveries")} className="flex flex-col gap-4">
         <TabsList>
           <TabsTrigger value="channels">Channels</TabsTrigger>
-          <TabsTrigger value="deliveries">Delivery records</TabsTrigger>
+          <TabsTrigger value="deliveries">Delivery log</TabsTrigger>
         </TabsList>
 
         <TabsContent value="channels">
@@ -353,7 +353,7 @@ export default function NotifyPage() {
               className="text-foreground/70 border-foreground/70 hover:bg-muted/60 hover:shadow-sm flex min-h-[130px] flex-col items-center justify-center gap-2 rounded-xl border border-dashed transition"
             >
               <PlusIcon className="size-6" />
-              <span className="text-sm">Add Channel</span>
+              <span className="text-sm">Add channel</span>
             </button>
 
             {channels.map((ch) => (
@@ -366,25 +366,25 @@ export default function NotifyPage() {
                   <div className="flex items-center gap-2">
                     <BellIcon className="text-muted-foreground size-4 shrink-0" />
                     <CardTitle className="truncate text-base">{ch.name}</CardTitle>
-                    {/* 卡片整体可点（进入编辑），所以这两个控件必须各自吞掉冒泡，
-                        否则开关/删除会顺带触发编辑。把 stopPropagation 挂在控件自己
-                        身上，而不是套一层 div：套 div 会造出一个「看起来可交互但没有
-                        角色」的静态元素，既触发 a11y 告警，语义上也说不通。 */}
+                    {/* The whole card is clickable (opens the editor), so these two controls must each swallow the bubbling click,
+                        otherwise toggling/deleting would also trigger editing. stopPropagation hangs off the controls themselves
+                        rather than a wrapping div: a div wrapper would create a static element that "looks interactive but has no
+                        role", tripping a11y warnings and making no semantic sense either. */}
                     <div className="ml-auto flex items-center gap-2">
                       <Switch
                         checked={ch.enabled}
                         onCheckedChange={() => toggleEnabled(ch)}
                         onClick={(e) => e.stopPropagation()}
-                        aria-label={"Enable"}
+                        aria-label="Enable"
                       />
                       <Button
                         size="icon"
                         variant="outline"
-                        aria-label={"Delete"}
+                        aria-label="Delete"
                         onClick={(e) => {
                           e.stopPropagation();
-                          // void 显式丢弃 Promise：removeChannel 自己 catch 并 toast，
-                          // 这里不需要 await（onClick 不是 async）。
+                          // void explicitly discards the Promise: removeChannel catches and toasts on its own,
+                          // so no await is needed here (onClick is not async).
                           void removeChannel(ch);
                         }}
                       >
@@ -396,7 +396,7 @@ export default function NotifyPage() {
                 <CardContent className="grid gap-3">
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge variant="outline">{KIND_LABEL[ch.kind] ?? ch.kind}</Badge>
-                    <Badge variant="outline">{ch.mode === "digest" ? "Summary" : "Live"}</Badge>
+                    <Badge variant="outline">{ch.mode === "digest" ? "Digest" : "Realtime"}</Badge>
                     {!ch.enabled && <Badge variant="outline">Disabled</Badge>}
                   </div>
                   <FilterSummary filter={ch.filter} />
@@ -417,18 +417,18 @@ export default function NotifyPage() {
             <SheetTitle>{editing ? editing.name : "Add notification channel"}</SheetTitle>
             <SheetDescription>
               {KIND_LABEL[form.kind] ?? form.kind}
-              {defaultRate > 0 ? ` • Default restricted flow ${defaultRate} strips/minutes` : " • Open-ended"}
+              {defaultRate > 0 ? ` · default rate limit ${defaultRate}/min` : " · no rate limit"}
             </SheetDescription>
           </SheetHeader>
 
           <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4">
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
-                <Label>Channel Type</Label>
+                <Label>Channel type</Label>
                 <Select
                   value={form.kind}
                   onValueChange={(v) => {
-                    // 换类型等于换一套凭据字段，不能把旧配置合并进来。
+                    // Switching type means switching to a different set of credential fields; the old config cannot be merged in.
                     setF({ kind: v, config: {} });
                   }}
                   disabled={!!editing}
@@ -446,16 +446,16 @@ export default function NotifyPage() {
                 </Select>
                 {editing && (
                   <p className="text-muted-foreground text-xs">
-                    The type of channel cannot be modified - a change in the type is equivalent to a change of certificate, please create a new channel.
+                    The channel type cannot be changed — a different type means a different set of credentials; create a new channel instead.
                   </p>
                 )}
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="n-name">Channel Name</Label>
+                <Label htmlFor="n-name">Channel name</Label>
                 <Input
                   id="n-name"
-                  placeholder={"Emergency Response Group / Daily Broadcast Group"}
+                  placeholder="Incident response group / Daily broadcast group"
                   value={form.name}
                   onChange={(e) => setF({ name: e.target.value })}
                 />
@@ -463,7 +463,7 @@ export default function NotifyPage() {
 
               {fields.length === 0 ? (
                 <p className="text-muted-foreground text-sm">
-                  The form for this channel is not yet defined (the CHANNEL_FIELDS entry is missing at the front end). Please complete it and try again.
+                  The form for this channel type is not defined yet (the frontend is missing a CHANNEL_FIELDS entry); add it and retry.
                 </p>
               ) : (
                 fields.map((d) => (
@@ -484,17 +484,17 @@ export default function NotifyPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="realtime">In real time... one for every loophole.</SelectItem>
-                    <SelectItem value="digest">• Merged in one article by cycle</SelectItem>
+                    <SelectItem value="realtime">Realtime · one message per finding</SelectItem>
+                    <SelectItem value="digest">Digest · merged into one message per interval</SelectItem>
                   </SelectContent>
                 </Select>
                 <p className="text-muted-foreground text-xs">
-                  There are two channels for "high-risk real-time, the rest aggregate": one real-time + threshold high-risk, one aggregate + open-level.
+                  For "realtime for High, digest for the rest", create two channels: one realtime with a High threshold, one digest with no severity limit.
                 </p>
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="n-rate">Rate limit (messages/minute)</Label>
+                <Label htmlFor="n-rate">Rate limit (messages/min)</Label>
                 <Input
                   id="n-rate"
                   type="number"
@@ -504,15 +504,15 @@ export default function NotifyPage() {
                   onChange={(e) => setF({ ratePerMin: e.target.value })}
                 />
                 <p className="text-muted-foreground text-xs">
-                  Saves the channel default; 0 means no flow limit. Unlimited messages are not lost, only sent late.
+                  Leave empty to use the channel default; 0 means no limit. Going over the limit never drops messages, only delays them.
                 </p>
               </div>
 
               <div className="border-t pt-4">
-                <p className="mb-3 text-sm font-medium">Filter rules (leave or do not filter)</p>
+                <p className="mb-3 text-sm font-medium">Filter rules (empty = no filtering)</p>
                 <div className="grid gap-4">
                   <div className="grid gap-2">
-                    <Label>Minimum level</Label>
+                    <Label>Minimum severity</Label>
                     <Select
                       value={form.minSeverity || "all"}
                       onValueChange={(v) => setF({ minSeverity: v === "all" ? "" : v })}
@@ -530,29 +530,29 @@ export default function NotifyPage() {
                     </Select>
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="n-inc">Include finding types</Label>
+                    <Label htmlFor="n-inc">Only these vulnerability types</Label>
                     <Textarea
                       id="n-inc"
-                      placeholder={"SQL injection\nCommand Execute"}
+                      placeholder={"SQL injection\ncommand execution"}
                       value={form.includeText}
                       onChange={(e) => setF({ includeText: e.target.value })}
                     />
                     <p className="text-muted-foreground text-xs">
-                      A keyword in each row, a substring that is insensitive to the size. Leave = All types.
+                      One keyword per line, matched case-insensitively as a substring. Leave empty for all types.
                     </p>
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="n-exc">Exclude finding types</Label>
+                    <Label htmlFor="n-exc">Exclude these vulnerability types</Label>
                     <Textarea
                       id="n-exc"
-                      placeholder={"Information leaks"}
+                      placeholder={"Information disclosure"}
                       value={form.excludeText}
                       onChange={(e) => setF({ excludeText: e.target.value })}
                     />
-                    <p className="text-muted-foreground text-xs">The exclusion has priority over inclusion: it is excluded at the same time.</p>
+                    <p className="text-muted-foreground text-xs">Exclusion beats inclusion: an item matching both is excluded.</p>
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="n-tasks">Limit Task ID</Label>
+                    <Label htmlFor="n-tasks">Restrict to task IDs</Label>
                     <Input
                       id="n-tasks"
                       placeholder="1, 2, 3"
@@ -561,29 +561,29 @@ export default function NotifyPage() {
                     />
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="n-assets">Qualified assets ID</Label>
+                    <Label htmlFor="n-assets">Restrict to asset IDs</Label>
                     <Input
                       id="n-assets"
                       placeholder="10, 11"
                       value={form.assetIDsText}
                       onChange={(e) => setF({ assetIDsText: e.target.value })}
                     />
-                    <p className="text-muted-foreground text-xs">Tasks/assets left blank = open; completion requirements intersect with loopholes.</p>
+                    <p className="text-muted-foreground text-xs">Empty task/asset = no restriction; when filled, the finding must intersect them.</p>
                   </div>
                   <div className="flex items-center gap-2 text-sm">
                     <Switch
                       checked={form.onStatusChange}
                       onCheckedChange={(v) => setF({ onStatusChange: v })}
-                      aria-label={"Receiving status change"}
+                      aria-label="Include status changes"
                     />
-                    It is also sent in case of a change in the disposal status (real-time mode only)
+                    Also push when a finding's status changes (realtime mode only)
                   </div>
                 </div>
               </div>
 
               <div className="flex items-center gap-2 text-sm">
-                <Switch checked={form.enabled} onCheckedChange={(v) => setF({ enabled: v })} aria-label={"Enable"} />
-                Enable the channel
+                <Switch checked={form.enabled} onCheckedChange={(v) => setF({ enabled: v })} aria-label="Enable" />
+                Enable this channel
               </div>
             </div>
 
@@ -593,7 +593,7 @@ export default function NotifyPage() {
               </Button>
               {editing && (
                 <Button variant="outline" onClick={testChannel} disabled={testing}>
-                  <SendIcon /> Send Test Message
+                  <SendIcon /> Send test message
                 </Button>
               )}
             </div>

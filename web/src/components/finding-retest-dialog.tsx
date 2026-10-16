@@ -27,7 +27,7 @@ interface FindingRetestDialogProps {
   onStarted?: (retest: FindingRetest) => void;
 }
 
-// 仅在打开时挂载，关闭后清空说明；列表与详情共用提交锁及错误处理，启动后留在当前页。
+// Mounted only while open; notes cleared on close. The list and detail share the submit lock and error handling; stays on the current page after starting.
 export function FindingRetestDialog({ findingId, findingName, onClose, onStarted }: FindingRetestDialogProps) {
   const notesId = React.useId();
   const [notes, setNotes] = React.useState("");
@@ -42,9 +42,9 @@ export function FindingRetestDialog({ findingId, findingName, onClose, onStarted
       const result = await api.startFindingRetest(findingId, notes.trim());
       onStarted?.(result.retest);
       onClose();
-      toast.success(result.created ? "Recovering started, click \"Recovering\" to view sessions" : "The loophole is being rechecked and can be viewed for existing sessions");
+      toast.success(result.created ? "Retest started; click 'Retesting' to view the session" : "This vulnerability is already being retested; view the existing session");
     } catch (e) {
-      toast.error(`Failed to start retest:${(e as Error).message}`);
+      toast.error(`Failed to start retest: ${(e as Error).message}`);
     } finally {
       submitLock.current = false;
       setSubmitting(false);
@@ -55,16 +55,16 @@ export function FindingRetestDialog({ findingId, findingName, onClose, onStarted
     <Dialog open onOpenChange={(open) => !open && !submitLock.current && onClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Retest finding #{findingId}</DialogTitle>
+          <DialogTitle>Retest vulnerability #{findingId}</DialogTitle>
           <DialogDescription className="break-words">
             {findingName ? <span className="mb-2 block">{findingName}</span> : null}
-            Retest agent
-            Read the original evidence and test limits and perform a targeted validation in an independent session. Once the retrospection has been successfully completed and the repair has been confirmed, the lacuna is automatically changed to " repaired " , and the other conclusions remain as they were.
+            Retest Agent
+            Reads the original evidence and test constraints, then runs targeted verification in a separate session. When the retest completes successfully and confirms the fix, the vulnerability status automatically becomes "Fixed"; other verdicts keep the current status.
           </DialogDescription>
         </DialogHeader>
         <FieldGroup>
           <Field data-disabled={submitting}>
-            <FieldLabel htmlFor={notesId}>Supplementary notes (optional)</FieldLabel>
+            <FieldLabel htmlFor={notesId}>Notes (optional)</FieldLabel>
             <Textarea
               id={notesId}
               value={notes}
@@ -72,9 +72,9 @@ export function FindingRetestDialog({ findingId, findingName, onClose, onStarted
               rows={4}
               disabled={submitting}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder={"For example: Validation of the original interface using the original test account; restoration version v2."}
+              placeholder="e.g. verify the original endpoint with the original test account; fix version is v2."
             />
-            <FieldDescription>Refurbishment version, test condition or this limitation may be supplemented.</FieldDescription>
+            <FieldDescription>Add the fix version, test conditions, or limitations of this run.</FieldDescription>
           </Field>
         </FieldGroup>
         <DialogFooter>
@@ -83,7 +83,7 @@ export function FindingRetestDialog({ findingId, findingName, onClose, onStarted
           </Button>
           <Button disabled={submitting} onClick={() => void start()}>
             {submitting ? <Spinner data-icon="inline-start" /> : <RotateCcwIcon data-icon="inline-start" />}
-            {submitting ? "Creating..." : "Start retest"}
+            {submitting ? "Creating…" : "Start retest"}
           </Button>
         </DialogFooter>
       </DialogContent>

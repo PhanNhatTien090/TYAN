@@ -38,7 +38,7 @@ export default function AssetSyncPage() {
     <div className="p-4 md:p-6">
       <div className="mb-4">
         <h1 className="font-semibold text-xl">Asset sync</h1>
-        <p className="text-muted-foreground text-sm">Synchronize assets from external data sources</p>
+        <p className="text-muted-foreground text-sm">Sync assets into the store from external data sources</p>
       </div>
       <Tabs defaultValue="scopesentry">
         <TabsList>
@@ -61,7 +61,7 @@ function ScopeSentryPanel() {
     api
       .ssStatus()
       .then(setStatus)
-      .catch((e) => toast.error(`Failed to load data source status:${e.message}`))
+      .catch((e) => toast.error(`Failed to read data source status: ${e.message}`))
       .finally(() => setLoadingStatus(false));
   }, []);
 
@@ -79,7 +79,7 @@ function ScopeSentryPanel() {
       ) : (
         <Card>
           <CardContent className="py-8 text-center text-muted-foreground text-sm">
-            Once the data source is ready, select the item/ task to sync.
+            Once the data source is ready, you can pick projects / tasks to sync.
           </CardContent>
         </Card>
       )}
@@ -87,7 +87,7 @@ function ScopeSentryPanel() {
   );
 }
 
-// ── 数据源状态卡 ─────────────────────────────────────────────────────────────
+// ── Data source status card ─────────────────────────────────────────────────────────────
 
 function DataSourceCard({
   status,
@@ -110,25 +110,25 @@ function DataSourceCard({
     setBusy(true);
     try {
       await api.ssDatasource({});
-      toast.success("ScopSentry source created, please fill in the address and key");
+      toast.success("ScopeSentry data source created; fill in the URL and key");
       onChanged();
     } catch (e) {
-      toast.error(`Failed to create:${(e as Error).message}`);
+      toast.error(`Create failed: ${(e as Error).message}`);
     } finally {
       setBusy(false);
     }
   };
 
   const save = async () => {
-    if (!url.trim()) return toast.error("Please fill in the MCP address");
+    if (!url.trim()) return toast.error("Please enter the MCP URL");
     setBusy(true);
     try {
       const r = await api.ssDatasource({ url: url.trim(), api_key: apiKey.trim() });
-      toast.success(r.enabled ? "Saved and enabled data sources" : "Saved (not yet enabled)");
+      toast.success(r.enabled ? "Data source saved and enabled" : "Saved (enable conditions not yet met)");
       setApiKey("");
       onChanged();
     } catch (e) {
-      toast.error(`Failed to save:${(e as Error).message}`);
+      toast.error(`Save failed: ${(e as Error).message}`);
     } finally {
       setBusy(false);
     }
@@ -138,7 +138,7 @@ function DataSourceCard({
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="flex items-center gap-2 text-base">
-          <PlugZapIcon className="size-4" /> Data Source State
+          <PlugZapIcon className="size-4" /> Data source status
           <StatusBadge status={status} loading={loading} />
         </CardTitle>
         <Button variant="ghost" size="sm" onClick={onChanged} disabled={loading}>
@@ -149,29 +149,29 @@ function DataSourceCard({
         {!status?.exists ? (
           <div className="flex items-center justify-between gap-4">
             <p className="text-muted-foreground text-sm">
-              The SpopeSentry data source has not been created. When created, a placeholder MCP (the address/key is empty, not enabled) will be added.
+              No ScopeSentry data source yet. Creating one adds a placeholder MCP (empty URL/key, disabled).
             </p>
             <Button onClick={create} disabled={busy}>
-              Create Data Source
+              Create data source
             </Button>
           </div>
         ) : (
           <>
             {!status.configured && (
               <p className="text-amber-600 text-sm dark:text-amber-500">
-                The data source has been created but not configured. Please complete the MCP address with API Key to enable it.
+                The data source is created but not configured; fill in the MCP URL and API key, then enable it.
               </p>
             )}
             {status.configured && !status.enabled && (
-              <p className="text-amber-600 text-sm dark:text-amber-500">The data source is configured but not enabled, and will be automatically enabled when saved.</p>
+              <p className="text-amber-600 text-sm dark:text-amber-500">The data source is configured but not enabled; it will be enabled automatically on save.</p>
             )}
             <div className="grid gap-3 md:grid-cols-2">
               <div className="space-y-1.5">
-                <Label>MCP Address</Label>
-                <Input placeholder={"http://<host>:8082/mcp"} value={url} onChange={(e) => setUrl(e.target.value)} />
+                <Label>MCP URL</Label>
+                <Input placeholder="http://<host>:8082/mcp" value={url} onChange={(e) => setUrl(e.target.value)} />
               </div>
               <div className="space-y-1.5">
-                <Label>API Key (X-API-Key, leave empty original value)</Label>
+                <Label>API Key (X-API-Key; leave empty to keep the current value)</Label>
                 <Input
                   type="password"
                   placeholder="ssk_..."
@@ -182,10 +182,10 @@ function DataSourceCard({
             </div>
             <div className="flex items-center gap-2">
               <Button onClick={save} disabled={busy}>
-                Save and Enable
+                Save & enable
               </Button>
               {status.enabled && status.tools.length > 0 && (
-                <span className="text-muted-foreground text-xs">Found {status.tools.length} tools</span>
+                <span className="text-muted-foreground text-xs">{status.tools.length} tools discovered</span>
               )}
             </div>
           </>
@@ -196,10 +196,10 @@ function DataSourceCard({
 }
 
 function StatusBadge({ status, loading }: { status: SSStatus | null; loading: boolean }) {
-  if (loading || !status) return <Badge variant="secondary">Testing...</Badge>;
+  if (loading || !status) return <Badge variant="secondary">Checking…</Badge>;
   if (!status.exists) return <Badge variant="destructive">Not created</Badge>;
   if (!status.configured) return <Badge variant="outline">Not configured</Badge>;
-  if (!status.enabled) return <Badge variant="outline">Disabled</Badge>;
+  if (!status.enabled) return <Badge variant="outline">Not enabled</Badge>;
   if (status.reachable)
     return (
       <Badge className="bg-emerald-600 hover:bg-emerald-600">
@@ -213,7 +213,7 @@ function StatusBadge({ status, loading }: { status: SSStatus | null; loading: bo
   );
 }
 
-// ── 同步工作区（项目 / 任务维度）────────────────────────────────────────────────
+// ── Sync workbench (project / task dimension) ────────────────────────────────────────────────
 
 function SyncWorkbench() {
   const [dimension, setDimension] = React.useState<Dimension>("project");
@@ -241,7 +241,7 @@ function SyncWorkbench() {
       dimension === "project"
         ? api.ssProjects(page, 50, search).then((r) => setProjects(r.projects))
         : api.ssTasks(page, 50, search).then(setTasks);
-    fn.catch((e) => toast.error(`Listing table failed:${e.message}`)).finally(() => setLoading(false));
+    fn.catch((e) => toast.error(`Failed to load the list: ${e.message}`)).finally(() => setLoading(false));
   }, [dimension, page, search]);
 
   React.useEffect(() => {
@@ -266,8 +266,8 @@ function SyncWorkbench() {
   const chosenTypes = ASSET_TYPES.filter((t) => assetTypes[t.key]).map((t) => t.key);
 
   const runSync = async () => {
-    if (selected.size === 0) return toast.error(`Please select at least one.${dimension === "project" ? "Project" : "Tasks"}`);
-    if (chosenTypes.length === 0) return toast.error("Please select at least one asset type");
+    if (selected.size === 0) return toast.error(`Select at least one ${dimension === "project" ? "project" : "task"}`);
+    if (chosenTypes.length === 0) return toast.error("Select at least one asset type");
     setSyncing(true);
     setResult(null);
     try {
@@ -279,9 +279,9 @@ function SyncWorkbench() {
       });
       setResult(r);
       const total = Object.values(r.synced ?? {}).reduce((a, b) => a + b, 0);
-      toast.success(`Sync complete. Records imported: ${total} assets`);
+      toast.success(`Sync finished; ${total} assets ingested in total`);
     } catch (e) {
-      toast.error(`Synchronization failed:${(e as Error).message}`);
+      toast.error(`Sync failed: ${(e as Error).message}`);
     } finally {
       setSyncing(false);
     }
@@ -301,7 +301,7 @@ function SyncWorkbench() {
       return (
         <TableRow>
           <TableCell colSpan={4} className="py-8 text-center text-muted-foreground text-sm">
-            No data available
+            No data
           </TableCell>
         </TableRow>
       );
@@ -337,10 +337,10 @@ function SyncWorkbench() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Select Data Sync</CardTitle>
+        <CardTitle className="text-base">Pick data to sync</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* 维度切换 */}
+        {/* Dimension switch */}
         <Tabs
           value={dimension}
           onValueChange={(v) => {
@@ -354,9 +354,9 @@ function SyncWorkbench() {
           </TabsList>
         </Tabs>
 
-        {/* 资产类型 + 选项 */}
+        {/* Asset types + options */}
         <div className="flex flex-wrap items-center gap-4">
-          <span className="font-medium text-sm">Synchronization of assets:</span>
+          <span className="font-medium text-sm">Assets to sync:</span>
           {ASSET_TYPES.map((t) => (
             <label key={t.key} htmlFor={`at-${t.key}`} className="flex items-center gap-1.5 text-sm">
               <Checkbox
@@ -370,18 +370,18 @@ function SyncWorkbench() {
           {dimension === "project" && (
             <label htmlFor="create-company" className="flex items-center gap-1.5 text-sm">
               <Checkbox id="create-company" checked={createCompany} onCheckedChange={(c) => setCreateCompany(!!c)} />
-              Created by project and included in the asset range
+              Create a company per project and write its asset scope
             </label>
           )}
         </div>
 
-        {/* 搜索 + 操作 */}
+        {/* Search + actions */}
         <div className="flex items-center gap-2">
           <div className="relative max-w-xs flex-1">
             <SearchIcon className="absolute top-1/2 left-2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               className="pl-8"
-              placeholder={dimension === "project" ? "Search projects" : "Search tasks"}
+              placeholder={dimension === "project" ? "Search project names" : "Search task names"}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               onKeyDown={(e) => {
@@ -396,13 +396,13 @@ function SyncWorkbench() {
             <RefreshCwIcon className={loading ? "size-4 animate-spin" : "size-4"} />
           </Button>
           <div className="flex-1" />
-          <span className="text-muted-foreground text-xs">Selected {selected.size}</span>
+          <span className="text-muted-foreground text-xs">{selected.size} selected</span>
           <Button onClick={runSync} disabled={syncing || selected.size === 0}>
-            <DownloadIcon className={syncing ? "size-4 animate-pulse" : "size-4"} /> Synchronise Selection
+            <DownloadIcon className={syncing ? "size-4 animate-pulse" : "size-4"} /> Sync selected
           </Button>
         </div>
 
-        {/* 列表 */}
+        {/* List */}
         <div className="rounded-md border">
           <Table>
             <TableHeader>
@@ -410,11 +410,11 @@ function SyncWorkbench() {
                 <TableHead className="w-10">
                   <Checkbox checked={rows.length > 0 && selected.size === rows.length} onCheckedChange={toggleAll} />
                 </TableHead>
-                <TableHead>{dimension === "project" ? "Project name" : "Task Name"}</TableHead>
+                <TableHead>{dimension === "project" ? "Project name" : "Task name"}</TableHead>
                 {dimension === "project" ? (
                   <>
-                    <TableHead>Label</TableHead>
-                    <TableHead className="text-right">Asset count</TableHead>
+                    <TableHead>Tag</TableHead>
+                    <TableHead className="text-right">Assets</TableHead>
                   </>
                 ) : (
                   <>
@@ -428,12 +428,12 @@ function SyncWorkbench() {
           </Table>
         </div>
 
-        {/* 分页 */}
+        {/* Pagination */}
         <div className="flex items-center justify-end gap-2">
           <Button variant="outline" size="sm" disabled={page <= 1 || loading} onClick={() => setPage((p) => p - 1)}>
             Previous
           </Button>
-          <span className="text-muted-foreground text-xs">Page {page} pages</span>
+          <span className="text-muted-foreground text-xs">Page {page}</span>
           <Button
             variant="outline"
             size="sm"
@@ -444,7 +444,7 @@ function SyncWorkbench() {
           </Button>
         </div>
 
-        {/* 结果 */}
+        {/* Result */}
         {result && <SyncResult result={result} />}
       </CardContent>
     </Card>
@@ -464,7 +464,7 @@ function SyncResult({ result }: { result: Awaited<ReturnType<typeof api.ssSync>>
         ))}
       </div>
       {result.companies && result.companies.length > 0 && (
-        <p className="text-muted-foreground">Organizations created/updated:{result.companies.join("、")}</p>
+        <p className="text-muted-foreground">Companies created/updated: {result.companies.join(", ")}</p>
       )}
       {result.warnings && result.warnings.length > 0 && (
         <ul className="list-inside list-disc text-amber-600 dark:text-amber-500">
@@ -478,7 +478,7 @@ function SyncResult({ result }: { result: Awaited<ReturnType<typeof api.ssSync>>
           {result.errors.slice(0, 20).map((em) => (
             <li key={em}>{em}</li>
           ))}
-          {result.errors.length > 20 && <li>…total {result.errors.length} errors</li>}
+          {result.errors.length > 20 && <li>… {result.errors.length} errors in total</li>}
         </ul>
       )}
     </div>

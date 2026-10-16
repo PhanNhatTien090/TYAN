@@ -90,7 +90,7 @@ function groupSteps(steps: Activity[], chat: boolean): Group[] {
   for (const s of steps) {
     if (s.kind === "usage") continue; // live token-usage marker — not a rendered step
     if (s.kind === "round") {
-      out.push({ type: "round", key: s.seq, label: s.summary || "New round." }); // planner round boundary
+      out.push({ type: "round", key: s.seq, label: s.summary || "New round" }); // planner round boundary
       continue;
     }
     if (s.kind === "intercept_request") {
@@ -129,7 +129,7 @@ function groupSteps(steps: Activity[], chat: boolean): Group[] {
   return out;
 }
 
-const kindLabel = (k: string) => (k === "thinking" ? "Inference." : k === "result" ? "Summary" : "Annotations");
+const kindLabel = (k: string) => (k === "thinking" ? "Thinking" : k === "result" ? "Summary" : "Note");
 
 function ActivityTime({ ts }: { ts: string }) {
   const date = new Date(ts);
@@ -182,7 +182,7 @@ function toolInputText(tool: string, raw: string): string {
 }
 
 // InterceptCard renders an inline intercept_request approval card. The pending_id
-// is extracted from the summary (format: "工具 X 请求审批 (#N)") so buttons are
+// is extracted from the summary (format: "tool X requests approval (#N)") so buttons are
 // available immediately without waiting for the detail load.
 function InterceptCard({
   step,
@@ -191,14 +191,14 @@ function InterceptCard({
   step: Activity;
   getDetail: (seq: number) => Promise<string>;
 }) {
-  // extract pending_id from summary: "工具 Bash 请求审批 (#42)"
+  // extract pending_id from summary: "tool Bash requests approval (#42)"
   const pendingId = React.useMemo(() => {
     const m = /\(#(\d+)\)/.exec(step.summary);
     return m ? parseInt(m[1], 10) : null;
   }, [step.summary]);
 
   const toolName = React.useMemo(() => {
-    const m = /工具\s+(\S+)\s+请求/.exec(step.summary);
+    const m = /tool\s+(\S+)\s+requests/.exec(step.summary);
     return m ? m[1] : step.summary;
   }, [step.summary]);
 
@@ -244,7 +244,7 @@ function InterceptCard({
     try {
       await api.interceptDecide(pendingId, decision);
       setDecided(decision);
-      toast.success(decision === "allowed" ? "Execution allowed" : "Denied execution");
+      toast.success(decision === "allowed" ? "Execution allowed" : "Execution denied");
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
@@ -265,7 +265,7 @@ function InterceptCard({
           <ShieldAlertIcon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" />
           <div className="min-w-0 space-y-0.5">
             <div className="flex items-center gap-1.5 font-medium">
-              <span className="text-amber-700 dark:text-amber-400">Requests for approval</span>
+              <span className="text-amber-700 dark:text-amber-400">Approval request</span>
               <code className="rounded bg-amber-100 dark:bg-amber-900/50 px-1 font-mono text-amber-800 dark:text-amber-300">
                 {toolName}
               </code>
@@ -280,7 +280,7 @@ function InterceptCard({
         </div>
 
         {step.inherited ? (
-          <Badge variant="outline">History. Read-only.</Badge>
+          <Badge variant="outline">History · Read-only</Badge>
         ) : decided ? (
           <span className={
             "shrink-0 rounded px-2 py-0.5 text-[11px] font-medium " +
@@ -338,9 +338,9 @@ function InterceptCard({
             ) : statusError ? (
               <div className="flex flex-wrap items-center gap-2 p-3" role="alert">
                 <span>{statusError}</span>
-                <Button variant="outline" size="sm" onClick={() => setRetry((value) => value + 1)}>Retry Details</Button>
+                <Button variant="outline" size="sm" onClick={() => setRetry((value) => value + 1)}>Retry details</Button>
               </div>
-            ) : <p className="p-3 text-muted-foreground">Loading approval details...</p>}
+            ) : <p className="p-3 text-muted-foreground">Loading approval details…</p>}
           </CollapsibleContent>
         </Collapsible>
       ) : null}
@@ -370,7 +370,7 @@ function ToolBlock({
   // effect below re-fetches — so the output shows up instead of being cached out.
   const loadedKey = React.useRef<string | null>(null);
   const { use, result } = group;
-  const toolName = use?.tool || result?.tool || "Tools";
+  const toolName = use?.tool || result?.tool || "Tool";
   const ToolIcon = toolName === "Bash" ? Terminal : Wrench;
   const running = !result;
   const ok = !!result && !result.is_error;
@@ -382,8 +382,8 @@ function ToolBlock({
   const rawCmd =
     use && use.summary.startsWith(toolName) ? use.summary.slice(toolName.length).trimStart() : (use?.summary ?? "");
   const cmd = toolInputText(toolName, rawCmd);
-  // status only — the full result lives behind the expand (【输出】), not previewed inline
-  const statusText = running ? "Executing..." : ok ? "✓" : "✕ Failed";
+  // status only — the full result lives behind the expand ([Output]), not previewed inline
+  const statusText = running ? "Running…" : ok ? "✓" : "✕ Failed";
 
   // key over the seqs we'd load; changes when the result (or command) arrives.
   const detailKey = `${use?.seq ?? ""}:${result?.seq ?? ""}`;
@@ -397,13 +397,13 @@ function ToolBlock({
       segs.map((x) =>
         getDetail(x.seq)
           .then((d) => d || "(empty)")
-          .catch(() => "Loading failed"),
+          .catch(() => "(failed to load)"),
       ),
     ).then((parts) => {
       if (!live) return;
       setDetail(
         segs
-          .map((x, i) => `【${x.label}】\n${x.label === "命令" ? toolInputText(toolName, parts[i]) : parts[i]}`)
+          .map((x, i) => `[${x.label}]\n${x.label === "Command" ? toolInputText(toolName, parts[i]) : parts[i]}`)
           .join("\n\n"),
       );
       loadedKey.current = detailKey;
@@ -457,7 +457,7 @@ function ToolBlock({
   return (
     <section
       ref={targetRef}
-      aria-label={focused ? `# The tool to locate #${use?.seq}` : undefined}
+      aria-label={focused ? `Focused tool call #${use?.seq}` : undefined}
       className={focused ? "rounded-lg border-2 border-primary bg-primary/5 p-3 text-xs" : "text-xs"}
     >
       <button type="button" onClick={toggle} className="flex w-full items-start gap-2 py-1 text-left hover:bg-muted/40">
@@ -514,7 +514,7 @@ function MessageBlock({
       ),
     ).then((parts) => {
       if (!live) return;
-      setDetail(group.steps.map((s, i) => `【${kindLabel(s.kind)}】\n${parts[i]}`).join("\n\n"));
+      setDetail(group.steps.map((s, i) => `[${kindLabel(s.kind)}]\n${parts[i]}`).join("\n\n"));
       loadedKey.current = detailKey;
     });
     return () => {
@@ -536,7 +536,7 @@ function MessageBlock({
         {showWorker && <span className={chip(group.worker)}>{group.worker}</span>}
         <span className={"min-w-0 flex-1 truncate " + tone}>
           {body}
-          {hasThinking && <span className="ml-1 text-[10px] text-muted-foreground">• Including reasoning</span>}
+          {hasThinking && <span className="ml-1 text-[10px] text-muted-foreground">· includes thinking</span>}
         </span>
       </button>
       {open && (
@@ -767,7 +767,7 @@ export function Transcript({
             <span className="size-1.5 animate-bounce rounded-full bg-blue-500 [animation-delay:-0.15s]" />
             <span className="size-1.5 animate-bounce rounded-full bg-blue-500" />
           </span>
-          Streaming live…
+          Live streaming…
         </div>
       )}
     </div>

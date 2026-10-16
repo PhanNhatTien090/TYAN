@@ -1,6 +1,9 @@
 package db
 
-import "database/sql"
+import (
+	"context"
+	"database/sql"
+)
 
 // Settings is a tiny key-value store for global app config the UI toggles at
 // runtime (e.g. traffic_capture). Missing keys fall back to caller defaults.
@@ -19,16 +22,23 @@ func (d *DB) GetSetting(key string) (value string, ok bool, err error) {
 
 // SetSetting upserts a setting value.
 func (d *DB) SetSetting(key, value string) error {
-	_, err := d.Exec(`
+	return d.SetSettingContext(context.Background(), key, value)
+}
+
+// SetSettingContext upserts a setting and respects cancellation or a deadline.
+func (d *DB) SetSettingContext(ctx context.Context, key, value string) error {
+	_, err := d.ExecContext(ctx, `
 INSERT INTO settings(key, value) VALUES ($1, $2)
 ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = now()`, key, value)
 	return err
 }
 
-// InsertSettingIfAbsent 只在 key 尚未存在时写入，已存在则原样保留并返回 inserted=false。
-// 给 auth.password_hash 这类"只允许首次设置"的键用：判定落在数据库的主键约束上，
-// 调用方先 GetSetting 再写的那种检查就只是快速失败路径——读出错或并发撞车时，
-// 已有的值也不会被 ON CONFLICT DO UPDATE 顺手覆盖掉。
+// InsertSettingIfAbsent writes only when the key does not exist yet; an existing key is
+// kept as-is and inserted=false is returned.
+// For keys like auth.password_hash that "may only be set on first run": the judgment rests
+// on the database primary-key constraint. A caller doing GetSetting-then-write is just a
+// fast-fail path — on a read error or a concurrent race, the existing value will not be
+// silently overwritten by ON CONFLICT DO UPDATE.
 func (d *DB) InsertSettingIfAbsent(key, value string) (inserted bool, err error) {
 	res, err := d.Exec(`
 INSERT INTO settings(key, value) VALUES ($1, $2)
